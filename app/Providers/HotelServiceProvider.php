@@ -29,6 +29,29 @@ class HotelServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+        $this->registerMenuItems();
+    }
+
+    /**
+     * Register menu items for the Hotel module.
+     */
+    protected function registerMenuItems(): void
+    {
+        $this->app->booted(function () {
+            \App\Services\MenuService::addMenuItem(
+                menu: 'primary',
+                id: 'hotel',
+                title: __('Hotel'),
+                url: '/dashboard/hotel',
+                icon: 'Hotel',
+                order: 100,
+                permissions: 'hotels.view_any',
+                route: 'hotel.*'
+            );
+
+            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('All Hotels'), '/dashboard/hotel', 10, 'hotels.view_any', 'hotel.index', 'List');
+            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Create Hotel'), '/dashboard/hotel/create', 20, 'hotels.create', 'hotel.create', 'Plus');
+        });
     }
 
     /**
