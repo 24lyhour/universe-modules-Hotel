@@ -38,8 +38,6 @@ const form = useForm<HotelFormData>({
     website: '',
     star_rating: 3,
     price_level: '',
-    price_per_night: null,
-    discount_price: null,
     currency: 'USD',
     hotel_category_id: null,
     logo_url: '',
@@ -54,7 +52,7 @@ const form = useForm<HotelFormData>({
     is_featured: false,
 });
 
-const isFormInvalid = computed(() => !form.name?.trim() || form.price_per_night === null || form.price_per_night < 0);
+const isFormInvalid = computed(() => !form.name?.trim());
 
 const handleSubmit = () => {
     form.post('/dashboard/hotels', {
@@ -69,7 +67,7 @@ const handleSubmit = () => {
         title="Create Hotel"
         description="Add a new hotel property"
         mode="create"
-        size="xl"
+        size="2xl"
         submit-text="Create Hotel"
         :loading="form.processing"
         :disabled="isFormInvalid"

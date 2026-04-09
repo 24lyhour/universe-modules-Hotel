@@ -2,13 +2,13 @@
 import { type InertiaForm } from '@inertiajs/vue3';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { ImageUpload } from '@/components/shared';
+import { ImageUpload, GeofenceMap } from '@/components/shared';
 import type { HotelFormData, HotelCategory, Province, StatusOption } from '../../../types';
 import { computed } from 'vue';
+import TiptapEditor from '@/components/TiptapEditor.vue';
 
 interface Props {
     mode?: 'create' | 'edit';
@@ -40,6 +40,13 @@ const provinceIdString = computed({
     },
 });
 
+const starRatingString = computed({
+    get: () => model.value.star_rating?.toString() ?? '3',
+    set: (val: string) => {
+        model.value.star_rating = Number(val);
+    },
+});
+
 const logoImages = computed({
     get: () => model.value.logo_url ? [model.value.logo_url] : [],
     set: (val: string[]) => {
@@ -53,6 +60,16 @@ const featuredImages = computed({
         model.value.featured_image = val.length > 0 ? val[0] : '';
     },
 });
+
+const isActive = computed({
+    get: () => model.value.is_featured,
+    set: (value: boolean) => {
+        model.value.is_featured = value;
+    },
+});
+
+const mapLatitude = computed(() => model.value.latitude != null ? Number(model.value.latitude) : null);
+const mapLongitude = computed(() => model.value.longitude != null ? Number(model.value.longitude) : null);
 </script>
 
 <template>
@@ -103,7 +120,7 @@ const featuredImages = computed({
 
                 <div class="space-y-2 sm:col-span-2">
                     <Label for="description">Description</Label>
-                    <Textarea id="description" v-model="model.description" placeholder="Hotel description" rows="3" />
+                    <TiptapEditor v-model="model.description" placeholder="Hotel description" min-height="200px" max-height="400px" />
                 </div>
             </div>
         </div>
@@ -137,7 +154,7 @@ const featuredImages = computed({
         <div class="space-y-4">
             <div>
                 <h3 class="text-sm font-medium">Location</h3>
-                <p class="text-sm text-muted-foreground">Hotel address and coordinates</p>
+                <p class="text-sm text-muted-foreground">Hotel address and map location</p>
             </div>
             <Separator />
             <div class="grid gap-4 sm:grid-cols-2">
@@ -172,15 +189,31 @@ const featuredImages = computed({
                     <Input id="country" v-model="model.country" placeholder="Country" />
                     <p v-if="model.errors.country" class="text-sm text-destructive">{{ model.errors.country }}</p>
                 </div>
+            </div>
 
-                <div class="space-y-2">
-                    <Label for="latitude">Latitude</Label>
-                    <Input id="latitude" :model-value="model.latitude ?? undefined" @update:model-value="(v: any) => (model.latitude = v ? Number(v) : null)" type="number" step="0.0000001" placeholder="e.g. 11.5564" />
-                </div>
+            <!-- Map -->
+            <div class="space-y-2">
+                <Label>Pin Location on Map</Label>
+                <GeofenceMap
+                    :latitude="mapLatitude"
+                    :longitude="mapLongitude"
+                    mode="location"
+                    height="400px"
+                    @update:latitude="(val) => model.latitude = val"
+                    @update:longitude="(val) => model.longitude = val"
+                />
+            </div>
 
-                <div class="space-y-2">
-                    <Label for="longitude">Longitude</Label>
-                    <Input id="longitude" :model-value="model.longitude ?? undefined" @update:model-value="(v: any) => (model.longitude = v ? Number(v) : null)" type="number" step="0.0000001" placeholder="e.g. 104.9282" />
+            <div v-if="model.latitude && model.longitude" class="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
+                <div class="flex-1 grid grid-cols-2 gap-4">
+                    <div>
+                        <Label class="text-xs text-muted-foreground">Latitude</Label>
+                        <p class="font-mono text-sm">{{ Number(model.latitude).toFixed(6) }}</p>
+                    </div>
+                    <div>
+                        <Label class="text-xs text-muted-foreground">Longitude</Label>
+                        <p class="font-mono text-sm">{{ Number(model.longitude).toFixed(6) }}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -194,31 +227,34 @@ const featuredImages = computed({
             <Separator />
             <div class="grid gap-4 sm:grid-cols-3">
                 <div class="space-y-2">
-                    <Label for="phone">Phone</Label>
-                    <Input id="phone" v-model="model.phone" placeholder="+855 ..." />
+                    <Label for="phone">Phone <span class="text-destructive">*</span></Label>
+                    <Input id="phone" v-model="model.phone" type="tel" placeholder="+855 ..." />
+                    <p v-if="model.errors.phone" class="text-sm text-destructive">{{ model.errors.phone }}</p>
                 </div>
                 <div class="space-y-2">
                     <Label for="email">Email</Label>
                     <Input id="email" v-model="model.email" type="email" placeholder="hotel@example.com" />
+                    <p v-if="model.errors.email" class="text-sm text-destructive">{{ model.errors.email }}</p>
                 </div>
                 <div class="space-y-2">
                     <Label for="website">Website</Label>
                     <Input id="website" v-model="model.website" placeholder="https://..." />
+                    <p v-if="model.errors.website" class="text-sm text-destructive">{{ model.errors.website }}</p>
                 </div>
             </div>
         </div>
 
-        <!-- Pricing & Rating -->
+        <!-- Rating & Currency -->
         <div class="space-y-4">
             <div>
-                <h3 class="text-sm font-medium">Pricing & Rating</h3>
-                <p class="text-sm text-muted-foreground">Set hotel pricing and star rating</p>
+                <h3 class="text-sm font-medium">Rating & Currency</h3>
+                <p class="text-sm text-muted-foreground">Star rating and currency (prices are set per room)</p>
             </div>
             <Separator />
-            <div class="grid gap-4 sm:grid-cols-4">
+            <div class="grid gap-4 sm:grid-cols-3">
                 <div class="space-y-2">
                     <Label for="star_rating">Star Rating <span class="text-destructive">*</span></Label>
-                    <Select :model-value="model.star_rating?.toString()" @update:model-value="(v: string) => (model.star_rating = Number(v))">
+                    <Select v-model="starRatingString">
                         <SelectTrigger>
                             <SelectValue placeholder="Stars" />
                         </SelectTrigger>
@@ -228,17 +264,6 @@ const featuredImages = computed({
                             </SelectItem>
                         </SelectContent>
                     </Select>
-                </div>
-
-                <div class="space-y-2">
-                    <Label for="price_per_night">Price / Night <span class="text-destructive">*</span></Label>
-                    <Input id="price_per_night" :model-value="model.price_per_night ?? undefined" @update:model-value="(v: any) => (model.price_per_night = v !== '' ? Number(v) : null)" type="number" step="0.01" min="0" placeholder="0.00" />
-                    <p v-if="model.errors.price_per_night" class="text-sm text-destructive">{{ model.errors.price_per_night }}</p>
-                </div>
-
-                <div class="space-y-2">
-                    <Label for="discount_price">Discount Price</Label>
-                    <Input id="discount_price" :model-value="model.discount_price ?? undefined" @update:model-value="(v: any) => (model.discount_price = v !== '' ? Number(v) : null)" type="number" step="0.01" min="0" placeholder="0.00" />
                 </div>
 
                 <div class="space-y-2">
@@ -253,25 +278,7 @@ const featuredImages = computed({
                         </SelectContent>
                     </Select>
                 </div>
-            </div>
-        </div>
 
-        <!-- Property Details -->
-        <div class="space-y-4">
-            <div>
-                <h3 class="text-sm font-medium">Property Details</h3>
-                <p class="text-sm text-muted-foreground">Rooms, floors, and property level</p>
-            </div>
-            <Separator />
-            <div class="grid gap-4 sm:grid-cols-3">
-                <div class="space-y-2">
-                    <Label for="total_rooms">Total Rooms</Label>
-                    <Input id="total_rooms" v-model.number="model.total_rooms" type="number" min="0" placeholder="0" />
-                </div>
-                <div class="space-y-2">
-                    <Label for="total_floors">Total Floors</Label>
-                    <Input id="total_floors" v-model.number="model.total_floors" type="number" min="0" placeholder="0" />
-                </div>
                 <div class="space-y-2">
                     <Label for="price_level">Price Level</Label>
                     <Select v-model="model.price_level">
@@ -288,10 +295,34 @@ const featuredImages = computed({
             </div>
         </div>
 
+        <!-- Property Details -->
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Property Details</h3>
+                <p class="text-sm text-muted-foreground">Rooms and floors</p>
+            </div>
+            <Separator />
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-2">
+                    <Label for="total_rooms">Total Rooms</Label>
+                    <Input id="total_rooms" v-model.number="model.total_rooms" type="number" min="0" placeholder="0" />
+                </div>
+                <div class="space-y-2">
+                    <Label for="total_floors">Total Floors</Label>
+                    <Input id="total_floors" v-model.number="model.total_floors" type="number" min="0" placeholder="0" />
+                </div>
+            </div>
+        </div>
+
         <!-- Featured -->
-        <div class="flex items-center gap-2">
-            <Checkbox id="is_featured" :checked="model.is_featured" @update:checked="(val: boolean) => (model.is_featured = val)" />
-            <Label for="is_featured" class="cursor-pointer">Featured Hotel</Label>
+        <div class="space-y-2">
+            <Label for="is_featured">Featured Hotel</Label>
+            <div class="flex items-center space-x-2 pt-1">
+                <Switch id="is_featured" :checked="isActive" @update:checked="isActive = $event" />
+                <Label for="is_featured" class="font-normal">
+                    {{ isActive ? 'Featured' : 'Not Featured' }}
+                </Label>
+            </div>
         </div>
     </div>
 </template>

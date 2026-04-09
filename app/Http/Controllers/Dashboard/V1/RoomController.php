@@ -178,6 +178,27 @@ class RoomController extends Controller
 
     // Standalone Trash (all rooms)
 
+    public function createRoom(): Modal
+    {
+        $hotels = Hotel::orderBy('name')->get(['id', 'uuid', 'name']);
+
+        return Inertia::modal('hotel::Dashboard/V1/Room/Create', [
+            'hotel' => null,
+            'hotels' => $hotels,
+            'statuses' => RoomStatusEnum::options(),
+        ])->baseRoute('hotel.rooms.index');
+    }
+
+    public function storeRoom(StoreRoomRequest $request): RedirectResponse
+    {
+        $hotel = Hotel::where('uuid', $request->input('hotel_uuid'))->firstOrFail();
+        $this->roomService->create($hotel, $request->validated());
+
+        return redirect()
+            ->route('hotel.rooms.index')
+            ->with('success', 'Room created successfully.');
+    }
+
     public function allTrashed(): Response
     {
         $rooms = Room::onlyTrashed()->with('hotel')->latest('deleted_at')->paginate(15);

@@ -142,8 +142,8 @@ const handlePerPageChange = (perPage: number) => {
                         </Link>
                     </Button>
                 </ButtonGroup>
-                <Button v-if="hotel" as-child>
-                    <Link :href="`${basePath}/create`">
+                <Button as-child>
+                    <Link :href="hotel ? `${basePath}/create` : '/dashboard/hotel-rooms/create'">
                         <Plus class="mr-2 h-4 w-4" />
                         Add Room
                     </Link>

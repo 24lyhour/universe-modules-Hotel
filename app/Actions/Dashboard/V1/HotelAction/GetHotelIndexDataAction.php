@@ -12,7 +12,7 @@ class GetHotelIndexDataAction
 {
     public function execute(int $perPage = 15, array $filters = []): array
     {
-        $query = Hotel::query()->with(['category', 'province', 'user', 'createdBy']);
+        $query = Hotel::query()->with(['category', 'province', 'user', 'createdBy'])->withCount('rooms');
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];

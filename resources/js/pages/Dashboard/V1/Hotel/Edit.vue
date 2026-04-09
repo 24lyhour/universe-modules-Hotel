@@ -39,8 +39,6 @@ const form = useForm<HotelFormData>({
     website: props.hotel.website ?? '',
     star_rating: props.hotel.star_rating,
     price_level: props.hotel.price_level ?? '',
-    price_per_night: props.hotel.price_per_night,
-    discount_price: props.hotel.discount_price,
     currency: props.hotel.currency,
     hotel_category_id: props.hotel.category?.id ?? null,
     logo_url: props.hotel.logo_url ?? '',
@@ -55,7 +53,7 @@ const form = useForm<HotelFormData>({
     is_featured: props.hotel.is_featured,
 });
 
-const isFormInvalid = computed(() => !form.name?.trim() || form.price_per_night === null || form.price_per_night < 0);
+const isFormInvalid = computed(() => !form.name?.trim());
 
 const handleSubmit = () => {
     form.put(`/dashboard/hotels/${props.hotel.uuid}`, {
@@ -70,7 +68,7 @@ const handleSubmit = () => {
         title="Edit Hotel"
         :description="`Editing ${hotel.name}`"
         mode="edit"
-        size="xl"
+        size="2xl"
         submit-text="Save Changes"
         :loading="form.processing"
         :disabled="isFormInvalid"

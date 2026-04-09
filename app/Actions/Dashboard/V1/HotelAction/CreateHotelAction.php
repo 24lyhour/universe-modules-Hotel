@@ -13,6 +13,7 @@ class CreateHotelAction
         return DB::transaction(function () use ($data) {
             $data['uuid'] = (string) Str::uuid();
             $data['slug'] = $this->generateUniqueSlug($data['name']);
+            $data['user_id'] = auth()->id();
             $data['created_by'] = auth()->id();
 
             return Hotel::create($data);

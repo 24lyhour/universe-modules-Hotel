@@ -46,7 +46,7 @@ class HotelServiceProvider extends ServiceProvider
                 route: 'hotel.*'
             );
 
-            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('All Hotels'), '/dashboard/hotels', 10, null, 'hotel.hotels.*', 'List');
+            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Hotels'), '/dashboard/hotels', 10, null, 'hotel.hotels.*', 'Hotel');
             \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Categories'), '/dashboard/hotel-categories', 15, null, 'hotel.categories.*', 'LayoutGrid');
             \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Amenities'), '/dashboard/hotel-amenities', 20, null, 'hotel.amenities.*', 'Sparkles');
             \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Rooms'), '/dashboard/hotel-rooms', 25, null, 'hotel.rooms.*', 'BedDouble');

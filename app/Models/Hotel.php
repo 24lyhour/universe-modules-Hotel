@@ -37,8 +37,10 @@ class Hotel extends Model
         'website',
         'star_rating',
         'price_level',
-        'price_per_night',
-        'discount_price',
+        'min_price',
+        'max_price',
+        'min_discount_price',
+        'max_discount_price',
         'currency',
         'featured_image',
         'total_rooms',
@@ -58,8 +60,10 @@ class Hotel extends Model
         return [
             'gallery' => 'array',
             'amenities' => 'array',
-            'price_per_night' => 'decimal:2',
-            'discount_price' => 'decimal:2',
+            'min_price' => 'decimal:2',
+            'max_price' => 'decimal:2',
+            'min_discount_price' => 'decimal:2',
+            'max_discount_price' => 'decimal:2',
             'star_rating' => 'integer',
             'total_rooms' => 'integer',
             'total_floors' => 'integer',
@@ -160,24 +164,20 @@ class Hotel extends Model
         return $query->where('star_rating', '>=', $rating);
     }
 
-    // Helpers
+    // Sync prices from rooms
 
-    public function isOnSale(): bool
+    public function syncPricesFromRooms(): void
     {
-        return $this->discount_price !== null && $this->discount_price < $this->price_per_night;
-    }
+        $rooms = $this->rooms()->get(['price', 'discount_price']);
 
-    public function getDiscountPercentageAttribute(): ?int
-    {
-        if (!$this->isOnSale()) {
-            return null;
-        }
+        $prices = $rooms->pluck('price')->filter();
+        $discounts = $rooms->pluck('discount_price')->filter();
 
-        return (int) round((($this->price_per_night - $this->discount_price) / $this->price_per_night) * 100);
-    }
-
-    public function getEffectivePriceAttribute(): float
-    {
-        return $this->isOnSale() ? (float) $this->discount_price : (float) $this->price_per_night;
+        $this->updateQuietly([
+            'min_price' => $prices->isNotEmpty() ? $prices->min() : null,
+            'max_price' => $prices->isNotEmpty() ? $prices->max() : null,
+            'min_discount_price' => $discounts->isNotEmpty() ? $discounts->min() : null,
+            'max_discount_price' => $discounts->isNotEmpty() ? $discounts->max() : null,
+        ]);
     }
 }

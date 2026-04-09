@@ -35,7 +35,7 @@ const columns: TableColumn<Hotel>[] = [
     { key: 'name', label: 'Hotel', width: '25%' },
     { key: 'city', label: 'City' },
     { key: 'star_rating', label: 'Stars', align: 'center' },
-    { key: 'price_per_night', label: 'Price/Night', align: 'right' },
+    { key: 'min_price', label: 'Price/Night', align: 'right' },
     { key: 'status', label: 'Status' },
     { key: 'rooms_count', label: 'Rooms', align: 'center' },
     { key: 'created_at', label: 'Created' },
@@ -224,11 +224,12 @@ const getStatusVariant = (status: string) => {
                 </div>
             </template>
 
-            <template #cell-price_per_night="{ item }">
-                <div>
-                    <span class="font-medium">{{ formatCurrency(item.effective_price) }}</span>
-                    <span v-if="item.is_on_sale" class="ml-1 text-xs text-muted-foreground line-through">{{ formatCurrency(item.price_per_night) }}</span>
+            <template #cell-min_price="{ item }">
+                <div v-if="item.min_price !== null">
+                    <span class="font-medium">{{ formatCurrency(item.min_price) }}</span>
+                    <span v-if="item.max_price && item.max_price !== item.min_price" class="text-xs text-muted-foreground"> - {{ formatCurrency(item.max_price) }}</span>
                 </div>
+                <span v-else class="text-muted-foreground text-sm">No rooms</span>
             </template>
 
             <template #cell-status="{ item }">

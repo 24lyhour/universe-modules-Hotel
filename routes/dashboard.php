@@ -77,6 +77,8 @@ Route::middleware(['auth', 'verified', 'auto.permission'])
         // Rooms (standalone listing for sidebar)
         // ---------------------------------------------------------------
         Route::get('hotel-rooms', [RoomController::class, 'allRooms'])->name('hotel.rooms.index');
+        Route::get('hotel-rooms/create', [RoomController::class, 'createRoom'])->name('hotel.rooms.create');
+        Route::post('hotel-rooms', [RoomController::class, 'storeRoom'])->name('hotel.rooms.store');
         Route::get('hotel-rooms/trash', [RoomController::class, 'allTrashed'])->name('hotel.rooms.trash');
         Route::put('hotel-rooms/{uuid}/restore', [RoomController::class, 'restoreRoom'])->name('hotel.rooms.restore');
         Route::delete('hotel-rooms/{uuid}/force-delete', [RoomController::class, 'forceDeleteRoom'])->name('hotel.rooms.force-delete');
