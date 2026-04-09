@@ -36,12 +36,17 @@ defineOptions({
 
 const searchQuery = ref(props.filters.search || '');
 const statusFilter = ref(props.filters.status || 'all');
+const hotelFilter = ref(props.filters.hotel || 'all');
 const selectedUuids = ref<(string | number)[]>([]);
 const basePath = computed(() =>
     props.hotel ? `/dashboard/hotels/${props.hotel.uuid}/rooms` : '/dashboard/hotel-rooms'
 );
 
-const hasActiveFilters = computed(() => !!(searchQuery.value || (statusFilter.value && statusFilter.value !== 'all')));
+const hasActiveFilters = computed(() => !!(
+    searchQuery.value ||
+    (statusFilter.value && statusFilter.value !== 'all') ||
+    (hotelFilter.value && hotelFilter.value !== 'all')
+));
 
 const columns = computed<TableColumn<Room>[]>(() => {
     const cols: TableColumn<Room>[] = [
@@ -87,34 +92,29 @@ const pagination = computed<PaginationData>(() => ({
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 
+const getFilterParams = () => ({
+    search: searchQuery.value || undefined,
+    status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
+    hotel: isStandalone.value && hotelFilter.value !== 'all' ? hotelFilter.value : undefined,
+});
+
 const applyFilters = () => {
-    router.get(basePath.value, {
-        search: searchQuery.value || undefined,
-        status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
-    }, { preserveState: true, preserveScroll: true });
+    router.get(basePath.value, getFilterParams(), { preserveState: true, preserveScroll: true });
 };
 
 const clearFilters = () => {
     searchQuery.value = '';
     statusFilter.value = 'all';
+    hotelFilter.value = 'all';
     router.get(basePath.value, {}, { preserveState: true, preserveScroll: true });
 };
 
 const handlePageChange = (page: number) => {
-    router.get(basePath.value, {
-        page,
-        per_page: pagination.value.per_page,
-        search: searchQuery.value || undefined,
-        status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
-    }, { preserveState: true });
+    router.get(basePath.value, { ...getFilterParams(), page, per_page: pagination.value.per_page }, { preserveState: true });
 };
 
 const handlePerPageChange = (perPage: number) => {
-    router.get(basePath.value, {
-        per_page: perPage,
-        search: searchQuery.value || undefined,
-        status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
-    }, { preserveState: true });
+    router.get(basePath.value, { ...getFilterParams(), per_page: perPage }, { preserveState: true });
 };
 </script>
 
@@ -203,6 +203,15 @@ const handlePerPageChange = (perPage: number) => {
                     <SelectItem v-for="s in statuses" :key="s.value" :value="s.value">{{ s.label }}</SelectItem>
                 </SelectContent>
             </Select>
+            <Select v-if="isStandalone && hotels?.length" v-model="hotelFilter" @update:model-value="applyFilters">
+                <SelectTrigger class="w-[180px]">
+                    <SelectValue placeholder="Hotel" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Hotels</SelectItem>
+                    <SelectItem v-for="h in hotels" :key="h.id" :value="h.id.toString()">{{ h.name }}</SelectItem>
+                </SelectContent>
+            </Select>
             <Button v-if="hasActiveFilters" variant="ghost" size="sm" class="text-muted-foreground hover:text-foreground" @click="clearFilters">
                 <X class="mr-1 h-4 w-4" />
                 Clear Filters
@@ -224,8 +233,11 @@ const handlePerPageChange = (perPage: number) => {
         >
             <template #cell-name="{ item }">
                 <div class="flex items-center gap-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                        <BedDouble class="h-4 w-4 text-primary" />
+                    <div class="h-10 w-10 overflow-hidden rounded-md bg-muted shrink-0">
+                        <img v-if="item.images && item.images.length" :src="item.images[0]" :alt="item.name" class="h-full w-full object-cover" />
+                        <div v-else class="flex h-full w-full items-center justify-center">
+                            <BedDouble class="h-5 w-5 text-muted-foreground" />
+                        </div>
                     </div>
                     <div>
                         <span class="font-medium">{{ item.name }}</span>

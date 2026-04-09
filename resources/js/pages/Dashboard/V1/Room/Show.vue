@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
     Pencil, Trash2, ArrowLeft, BedDouble, DollarSign, Users, Bath, Maximize, Eye,
-    Hotel as HotelIcon, Layers, Hash,
+    Hotel as HotelIcon, Layers, Hash, CheckCircle,
 } from 'lucide-vue-next';
 
 defineOptions({
@@ -41,8 +41,11 @@ const getStatusVariant = (status: string) => {
                     <Button variant="ghost" size="icon"><ArrowLeft class="h-4 w-4" /></Button>
                 </Link>
                 <div class="flex items-center gap-4">
-                    <div class="flex h-14 w-14 items-center justify-center rounded-lg bg-primary/10">
-                        <BedDouble class="h-7 w-7 text-primary" />
+                    <div class="h-14 w-14 overflow-hidden rounded-lg bg-primary/10 shrink-0">
+                        <img v-if="room.images && room.images.length" :src="room.images[0]" :alt="room.name" class="h-full w-full object-cover" />
+                        <div v-else class="flex h-full w-full items-center justify-center">
+                            <BedDouble class="h-7 w-7 text-primary" />
+                        </div>
                     </div>
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight">{{ room.name }}</h1>
@@ -66,7 +69,7 @@ const getStatusVariant = (status: string) => {
 
         <!-- Room Images -->
         <div v-if="room.images && room.images.length" class="overflow-hidden rounded-lg">
-            <img :src="room.images[0]" :alt="room.name" class="h-[350px] w-full object-cover" />
+            <img :src="room.images[0]" :alt="room.name" class="h-[350px] w-full object-contain" />
         </div>
 
         <div class="grid gap-6 lg:grid-cols-3">
@@ -115,6 +118,14 @@ const getStatusVariant = (status: string) => {
                                 <div>
                                     <p class="text-xs text-muted-foreground">Total Rooms</p>
                                     <p class="text-sm font-medium">{{ room.total_room }}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3 rounded-lg border p-3">
+                                <CheckCircle class="h-5 w-5 text-green-500" />
+                                <div>
+                                    <p class="text-xs text-muted-foreground">Available Count</p>
+                                    <p class="text-sm font-medium">{{ room.room_available_count ?? 0 }}</p>
                                 </div>
                             </div>
 
