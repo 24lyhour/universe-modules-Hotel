@@ -5,6 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { Room, StatusOption, PaginatedResponse } from '../../../../types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableReusable, StatsCard, ButtonGroup } from '@/components/shared';
@@ -55,6 +56,7 @@ const columns = computed<TableColumn<Room>[]>(() => {
         { key: 'price', label: 'Price', align: 'right' },
         { key: 'capacity', label: 'Capacity', align: 'center' },
         { key: 'bed_type', label: 'Bed' },
+        { key: 'bed_count', label: 'Beds', align: 'center' },
         { key: 'is_available', label: 'Available' },
         { key: 'status', label: 'Status' },
     );
@@ -248,7 +250,15 @@ const handlePerPageChange = (perPage: number) => {
                 <span class="capitalize">{{ item.bed_type || '-' }}</span>
             </template>
             <template #cell-is_available="{ item }">
-                <Badge :variant="item.is_available ? 'default' : 'secondary'">{{ item.is_available ? 'Yes' : 'No' }}</Badge>
+                <div class="flex items-center gap-2" @click.stop>
+                    <Switch
+                        :model-value="item.is_available"
+                        @update:model-value="router.patch(`/dashboard/hotels/${hotel?.uuid || item.hotel?.uuid}/rooms/${item.uuid}/toggle-availability`, {}, { preserveState: true, preserveScroll: true })"
+                    />
+                    <span class="text-sm text-muted-foreground">
+                        {{ item.is_available ? 'Yes' : 'No' }}
+                    </span>
+                </div>
             </template>
             <template #cell-status="{ item }">
                 <Badge :variant="item.status === 'active' ? 'default' : item.status === 'maintenance' ? 'outline' : 'secondary'">{{ item.status }}</Badge>

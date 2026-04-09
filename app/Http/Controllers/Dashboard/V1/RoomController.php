@@ -102,7 +102,7 @@ class RoomController extends Controller
 
         return Inertia::render('hotel::Dashboard/V1/Room/Show', [
             'hotel' => $hotel->only(['id', 'uuid', 'name']),
-            'room' => new RoomResource($room),
+            'room' => (new RoomResource($room))->resolve(),
         ]);
     }
 
@@ -110,7 +110,7 @@ class RoomController extends Controller
     {
         return Inertia::modal('hotel::Dashboard/V1/Room/Edit', [
             'hotel' => $hotel->only(['id', 'uuid', 'name']),
-            'room' => new RoomResource($room),
+            'room' => (new RoomResource($room))->resolve(),
             'statuses' => RoomStatusEnum::options(),
         ])->baseRoute('hotel.hotels.rooms.index', ['hotel' => $hotel]);
     }
