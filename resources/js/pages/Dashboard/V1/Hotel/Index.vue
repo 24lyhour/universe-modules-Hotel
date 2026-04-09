@@ -81,9 +81,11 @@ const getStatusVariant = (status: string) => {
 </script>
 
 <template>
+    
+
     <Head title="Hotels" />
 
-    <div class="space-y-6">
+     <div class="flex h-full flex-1 flex-col gap-6 p-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
             <div>
@@ -189,4 +191,5 @@ const getStatusVariant = (status: string) => {
             </template>
         </TableReusable>
     </div>
+
 </template>

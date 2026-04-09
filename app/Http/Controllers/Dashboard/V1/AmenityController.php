@@ -8,32 +8,27 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Momentum\Modal\Modal;
+use Modules\Hotel\Actions\Dashboard\V1\AmenitiesAction\BulkDeleteAmenitiesAction;
+use Modules\Hotel\Actions\Dashboard\V1\AmenitiesAction\CreateAmenityAction;
+use Modules\Hotel\Actions\Dashboard\V1\AmenitiesAction\DeleteAmenityAction;
+use Modules\Hotel\Actions\Dashboard\V1\AmenitiesAction\GetAmenityEditDataAction;
+use Modules\Hotel\Actions\Dashboard\V1\AmenitiesAction\GetAmenityIndexDataAction;
+use Modules\Hotel\Actions\Dashboard\V1\AmenitiesAction\ToggleAmenityStatusAction;
+use Modules\Hotel\Actions\Dashboard\V1\AmenitiesAction\UpdateAmenityAction;
+use Modules\Hotel\Http\Requests\Dashboard\V1\AmenityRequest\BulkDeleteAmenitiesRequest;
+use Modules\Hotel\Http\Requests\Dashboard\V1\AmenityRequest\StoreAmenityRequest;
+use Modules\Hotel\Http\Requests\Dashboard\V1\AmenityRequest\UpdateAmenityRequest;
 use Modules\Hotel\Http\Resources\AmenityResource;
 use Modules\Hotel\Models\Amenity;
-use Modules\Hotel\Services\AmenityService;
 
 class AmenityController extends Controller
 {
-    public function __construct(
-        protected AmenityService $amenityService
-    ) {}
-
-    public function index(Request $request): Response
+    public function index(Request $request, GetAmenityIndexDataAction $action): Response
     {
         $perPage = $request->input('per_page', 10);
         $filters = $request->only(['search', 'is_active', 'group']);
-        $amenities = $this->amenityService->paginate($perPage, $filters);
 
-        return Inertia::render('hotel::Dashboard/V1/Amenity/Index', [
-            'amenities' => AmenityResource::collection($amenities)->response()->getData(true),
-            'filters' => $filters,
-            'stats' => [
-                'total' => \Modules\Hotel\Models\Amenity::count(),
-                'active' => \Modules\Hotel\Models\Amenity::where('is_active', true)->count(),
-                'inactive' => \Modules\Hotel\Models\Amenity::where('is_active', false)->count(),
-                'trashed' => \Modules\Hotel\Models\Amenity::onlyTrashed()->count(),
-            ],
-        ]);
+        return Inertia::render('hotel::Dashboard/V1/Amenity/Index', $action->execute($perPage, $filters));
     }
 
     public function create(): Modal
@@ -42,61 +37,48 @@ class AmenityController extends Controller
             ->baseRoute('hotel.amenities.index');
     }
 
-    public function store(): RedirectResponse
+    public function store(StoreAmenityRequest $request, CreateAmenityAction $action): RedirectResponse
     {
-        $validated = request()->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'icon' => ['nullable', 'string', 'max:50'],
-            'group' => ['nullable', 'string', 'max:100'],
-            'description' => ['nullable', 'string'],
-            'is_active' => ['nullable', 'boolean'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-        ]);
-
-        $this->amenityService->create($validated);
+        $action->execute($request->validated());
 
         return redirect()
             ->route('hotel.amenities.index')
             ->with('success', 'Amenity created successfully.');
     }
 
-    public function edit(Amenity $amenity): Modal
+    public function edit(Amenity $amenity, GetAmenityEditDataAction $action): Modal
     {
-        return Inertia::modal('hotel::Dashboard/V1/Amenity/Edit', [
-            'amenity' => new AmenityResource($amenity),
-        ])->baseRoute('hotel.amenities.index');
+        return Inertia::modal('hotel::Dashboard/V1/Amenity/Edit', $action->execute($amenity))
+            ->baseRoute('hotel.amenities.index');
     }
 
-    public function update(Amenity $amenity): RedirectResponse
+    public function confirmDelete(Amenity $amenity, GetAmenityEditDataAction $action): Modal
     {
-        $validated = request()->validate([
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'icon' => ['nullable', 'string', 'max:50'],
-            'group' => ['nullable', 'string', 'max:100'],
-            'description' => ['nullable', 'string'],
-            'is_active' => ['nullable', 'boolean'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-        ]);
+        return Inertia::modal('hotel::Dashboard/V1/Amenity/Delete', $action->execute($amenity))
+            ->baseRoute('hotel.amenities.index');
+    }
 
-        $this->amenityService->update($amenity, $validated);
+    public function update(UpdateAmenityRequest $request, Amenity $amenity, UpdateAmenityAction $action): RedirectResponse
+    {
+        $action->execute($amenity, $request->validated());
 
         return redirect()
             ->route('hotel.amenities.index')
             ->with('success', 'Amenity updated successfully.');
     }
 
-    public function destroy(Amenity $amenity): RedirectResponse
+    public function destroy(Amenity $amenity, DeleteAmenityAction $action): RedirectResponse
     {
-        $this->amenityService->delete($amenity);
+        $action->execute($amenity);
 
         return redirect()
             ->route('hotel.amenities.index')
             ->with('success', 'Amenity deleted successfully.');
     }
 
-    public function toggleActive(Amenity $amenity): RedirectResponse
+    public function toggleActive(Amenity $amenity, ToggleAmenityStatusAction $action): RedirectResponse
     {
-        $this->amenityService->toggleActive($amenity);
+        $action->execute($amenity);
 
         return redirect()->back()->with('success', 'Amenity status updated.');
     }
@@ -105,7 +87,7 @@ class AmenityController extends Controller
 
     public function trash(): Response
     {
-        $amenities = $this->amenityService->getTrashed();
+        $amenities = Amenity::onlyTrashed()->latest('deleted_at')->paginate(15);
 
         return Inertia::render('hotel::Dashboard/V1/Amenity/Trash', [
             'amenities' => AmenityResource::collection($amenities)->response()->getData(true),
@@ -114,22 +96,29 @@ class AmenityController extends Controller
 
     public function restore(string $uuid): RedirectResponse
     {
-        $this->amenityService->restore($uuid);
+        $amenity = Amenity::onlyTrashed()->where('uuid', $uuid)->first();
+
+        if ($amenity) {
+            $amenity->restore();
+        }
 
         return redirect()->back()->with('success', 'Amenity restored.');
     }
 
     public function forceDelete(string $uuid): RedirectResponse
     {
-        $this->amenityService->forceDelete($uuid);
+        $amenity = Amenity::onlyTrashed()->where('uuid', $uuid)->first();
+
+        if ($amenity) {
+            $amenity->forceDelete();
+        }
 
         return redirect()->back()->with('success', 'Amenity permanently deleted.');
     }
 
-    public function bulkDelete(): RedirectResponse
+    public function bulkDelete(BulkDeleteAmenitiesRequest $request, BulkDeleteAmenitiesAction $action): RedirectResponse
     {
-        $uuids = request('uuids', []);
-        $this->amenityService->bulkDelete($uuids);
+        $action->execute($request->validated()['uuids']);
 
         return redirect()
             ->route('hotel.amenities.index')

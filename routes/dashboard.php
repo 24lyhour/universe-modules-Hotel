@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified', 'auto.permission'])
         Route::delete('hotel-amenities/{uuid}/force-delete', [AmenityController::class, 'forceDelete'])->name('hotel.amenities.force-delete');
         Route::delete('hotel-amenities/bulk-delete', [AmenityController::class, 'bulkDelete'])->name('hotel.amenities.bulk-delete');
         Route::patch('hotel-amenities/{amenity}/toggle-active', [AmenityController::class, 'toggleActive'])->name('hotel.amenities.toggle-active');
+        Route::get('hotel-amenities/{amenity}/delete', [AmenityController::class, 'confirmDelete'])->name('hotel.amenities.confirm-delete');
 
         Route::resource('hotel-amenities', AmenityController::class)
             ->parameters(['hotel-amenities' => 'amenity'])

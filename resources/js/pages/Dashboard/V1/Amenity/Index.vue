@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, type VNode } from 'vue';
 import { Head, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TableReusable, StatsCard, ButtonGroup } from '@/components/shared';
@@ -19,8 +19,16 @@ import {
     Wifi, Waves, Flower2, UtensilsCrossed, Dumbbell, Car, Umbrella, Coffee,
     type LucideIcon,
 } from 'lucide-vue-next';
-import type { BreadcrumbItem } from '@/types';
 import type { Amenity, PaginatedResponse } from '../../../../types';
+
+defineOptions({
+    layout: (h: (type: unknown, props: unknown, children: unknown) => VNode, page: VNode) =>
+        h(AppLayout, { breadcrumbs: [
+            { title: 'Dashboard', href: '/dashboard' },
+            { title: 'Hotels', href: '/dashboard/hotels' },
+            { title: 'Amenities', href: '/dashboard/hotel-amenities' },
+        ] }, () => page),
+});
 
 const iconMap: Record<string, LucideIcon> = {
     Wifi, Pool: Waves, Spa: Flower2, Restaurant: UtensilsCrossed,
@@ -45,12 +53,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Hotels', href: '/dashboard/hotels' },
-    { title: 'Amenities', href: '/dashboard/hotel-amenities' },
-];
 
 const search = ref(props.filters.search || '');
 const statusFilter = ref(props.filters.is_active || 'all');
@@ -147,10 +149,9 @@ const openBulkDeleteDialog = () => {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <Head title="Amenities" />
+    <Head title="Amenities" />
 
-        <div class="flex h-full flex-1 flex-col gap-6 p-6">
+    <div class="flex h-full flex-1 flex-col gap-6 p-6">
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
@@ -300,6 +301,5 @@ const openBulkDeleteDialog = () => {
                     </template>
                 </TableReusable>
             </div>
-        </div>
-    </AppLayout>
+    </div>
 </template>

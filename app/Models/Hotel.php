@@ -27,6 +27,7 @@ class Hotel extends Model
         'slug',
         'description',
         'address',
+        'logo_url',
         'city',
         'country',
         'province_id',
