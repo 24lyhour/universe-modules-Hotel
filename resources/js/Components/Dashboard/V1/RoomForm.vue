@@ -169,6 +169,11 @@ const isAvailable = computed({
                 </div>
 
                 <div class="space-y-2">
+                    <Label for="room_available_count">Available Count</Label>
+                    <Input id="room_available_count" v-model.number="model.room_available_count" type="number" min="0" placeholder="0" />
+                </div>
+
+                <div class="space-y-2">
                     <Label for="bathroom_count">Bathrooms</Label>
                     <Input id="bathroom_count" v-model.number="model.bathroom_count" type="number" min="0" placeholder="1" />
                 </div>

@@ -30,7 +30,7 @@ const isOpen = computed({ get: () => show.value, set: (val: boolean) => { if (!v
 const form = useForm<RoomFormData & { hotel_uuid: string }>({
     hotel_uuid: props.hotel?.uuid ?? '',
     name: '', total_room: 1, room_type: '', room_number: '', description: '', price: null, discount_price: null,
-    capacity: 2, bed_type: '', bed_count: 1, bathroom_count: 1, room_size: '', view: '',
+    capacity: 2, bed_type: '', bed_count: 1, room_available_count: 0, bathroom_count: 1, room_size: '', view: '',
     amenities: [], images: [], is_available: true, sort_order: 0, status: 'active',
 });
 

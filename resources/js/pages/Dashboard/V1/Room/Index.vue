@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableReusable, StatsCard, ButtonGroup } from '@/components/shared';
 import type { TableColumn, TableAction, PaginationData } from '@/components/shared';
-import { Plus, Pencil, Trash2, Search, ArrowLeft, BedDouble, X, CheckCircle, Wrench, Database } from 'lucide-vue-next';
+import { Plus, Pencil, Trash2, Search, ArrowLeft, BedDouble, X, CheckCircle, Wrench, Database, Eye } from 'lucide-vue-next';
 
 const props = defineProps<{
     hotel: { id: number; uuid: string; name: string } | null;
@@ -57,6 +57,7 @@ const columns = computed<TableColumn<Room>[]>(() => {
         { key: 'capacity', label: 'Capacity', align: 'center' },
         { key: 'bed_type', label: 'Bed' },
         { key: 'bed_count', label: 'Beds', align: 'center' },
+        { key: 'room_available_count', label: 'Available Qty', align: 'center' },
         { key: 'is_available', label: 'Available' },
         { key: 'status', label: 'Status' },
     );
@@ -71,6 +72,7 @@ const tableActions = computed<TableAction<Room>[]>(() => {
         ];
     }
     return [
+        { label: 'View', icon: Eye, onClick: (item) => router.visit(`/dashboard/hotels/${item.hotel?.uuid}/rooms/${item.uuid}`) },
         { label: 'Edit', icon: Pencil, onClick: (item) => router.visit(`/dashboard/hotels/${item.hotel?.uuid}/rooms/${item.uuid}/edit`) },
         { label: 'Delete', icon: Trash2, onClick: (item) => router.delete(`/dashboard/hotels/${item.hotel?.uuid}/rooms/${item.uuid}`), variant: 'destructive', separator: true },
     ];

@@ -47,7 +47,8 @@ class RoomController extends Controller
             $query->where('is_available', $filters['is_available']);
         }
 
-        $rooms = $query->latest()->paginate(15);
+        $perPage = request()->input('per_page', 15);
+        $rooms = $query->latest()->paginate($perPage);
         $hotels = Hotel::orderBy('name')->get(['id', 'uuid', 'name']);
 
         return Inertia::render('hotel::Dashboard/V1/Room/Index', [

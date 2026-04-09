@@ -81,6 +81,7 @@ export interface Room {
     capacity: number;
     bed_type: string | null;
     bed_count: number;
+    room_available_count: number;
     bathroom_count: number;
     room_size: string | null;
     view: string | null;
@@ -106,6 +107,7 @@ export interface RoomFormData {
     capacity: number;
     bed_type: string;
     bed_count: number;
+    room_available_count: number;
     bathroom_count: number;
     room_size: string;
     view: string;
