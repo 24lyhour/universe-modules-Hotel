@@ -50,7 +50,11 @@ class HotelServiceProvider extends ServiceProvider
             \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('All Hotels'), '/dashboard/hotels', 10, 'hotels.view_any', 'hotel.hotels.index', 'List');
             \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Categories'), '/dashboard/hotel-categories', 15, 'hotel_categories.view_any', 'hotel.categories.index', 'LayoutGrid');
             \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Amenities'), '/dashboard/hotel-amenities', 20, 'hotel_amenities.view_any', 'hotel.amenities.index', 'Sparkles');
-        });
+            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Room'), '/dashboard/hotel-room', 20, 'hotel_room.view_any', 'hotel.room.index', 'Room');
+            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Province'), '/dashboard/hotel-province', 20, 'hotel_province.view_any', 'hotel.province.index', 'Province');
+
+
+            });
     }
 
     /**

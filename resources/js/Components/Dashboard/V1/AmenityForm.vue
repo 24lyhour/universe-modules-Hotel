@@ -1,52 +1,120 @@
 <script setup lang="ts">
-import { type InertiaForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import type { InertiaForm } from '@inertiajs/vue3';
 import type { AmenityFormData } from '../../../types';
+import TiptapEditor from '@/components/TiptapEditor.vue';
 
 interface Props {
     mode?: 'create' | 'edit';
 }
 
-withDefaults(defineProps<Props>(), { mode: 'create' });
+const props = withDefaults(defineProps<Props>(), { mode: 'create' });
 
 const model = defineModel<InertiaForm<AmenityFormData>>({ required: true });
+
+const isActive = computed({
+    get: () => model.value.is_active,
+    set: (value: boolean) => {
+        model.value.is_active = value;
+    },
+});
 </script>
 
 <template>
-    <div class="grid gap-4">
-        <div>
-            <Label for="name">Name *</Label>
-            <Input id="name" v-model="model.name" placeholder="Amenity name" :class="{ 'border-destructive': model.errors.name }" />
-            <p v-if="model.errors.name" class="mt-1 text-sm text-destructive">{{ model.errors.name }}</p>
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2">
+    <div class="space-y-6">
+        <!-- Basic Information -->
+        <div class="space-y-4">
             <div>
-                <Label for="icon">Icon</Label>
-                <Input id="icon" v-model="model.icon" placeholder="e.g. Wifi, Pool" />
+                <h3 class="text-sm font-medium">Basic Information</h3>
+                <p class="text-sm text-muted-foreground">
+                    {{ mode === 'create' ? 'Enter the amenity details' : 'Update the amenity details' }}
+                </p>
             </div>
-            <div>
-                <Label for="group">Group</Label>
-                <Input id="group" v-model="model.group" placeholder="e.g. facilities, services" />
-            </div>
-        </div>
+            <Separator />
 
-        <div>
-            <Label for="description">Description</Label>
-            <Textarea id="description" v-model="model.description" placeholder="Amenity description" rows="2" />
-        </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-2">
+                    <Label for="name">Amenity Name <span class="text-destructive">*</span></Label>
+                    <Input
+                        id="name"
+                        v-model="model.name"
+                        type="text"
+                        placeholder="Enter amenity name"
+                    />
+                    <p v-if="model.errors.name" class="text-sm text-destructive">
+                        {{ model.errors.name }}
+                    </p>
+                </div>
 
-        <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-                <Label for="sort_order">Sort Order</Label>
-                <Input id="sort_order" v-model.number="model.sort_order" type="number" min="0" placeholder="0" />
-            </div>
-            <div class="flex items-center gap-2 pt-6">
-                <Checkbox id="is_active" :checked="model.is_active" @update:checked="(val: boolean) => (model.is_active = val)" />
-                <Label for="is_active" class="cursor-pointer">Active</Label>
+                <div class="space-y-2">
+                    <Label for="icon">Icon</Label>
+                    <Input
+                        id="icon"
+                        v-model="model.icon"
+                        type="text"
+                        placeholder="e.g. Wifi, Pool, Spa"
+                    />
+                    <p v-if="model.errors.icon" class="text-sm text-destructive">
+                        {{ model.errors.icon }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="group">Group</Label>
+                    <Input
+                        id="group"
+                        v-model="model.group"
+                        type="text"
+                        placeholder="e.g. facilities, services"
+                    />
+                    <p v-if="model.errors.group" class="text-sm text-destructive">
+                        {{ model.errors.group }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="sort_order">Sort Order</Label>
+                    <Input
+                        id="sort_order"
+                        v-model.number="model.sort_order"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                    />
+                    <p v-if="model.errors.sort_order" class="text-sm text-destructive">
+                        {{ model.errors.sort_order }}
+                    </p>
+                </div>
+
+                <div class="space-y-2 sm:col-span-2">
+                    <Label for="description">Description</Label>
+                    <TiptapEditor
+                        v-model="model.description"
+                        placeholder="Enter amenity description"
+                        min-height="200px"
+                        max-height="400px"
+                    />
+                    <p v-if="model.errors.description" class="text-sm text-destructive">
+                        {{ model.errors.description }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="is_active">Status <span class="text-destructive">*</span></Label>
+                    <div class="flex items-center space-x-2 pt-2">
+                        <Switch id="is_active" v-model="isActive" />
+                        <Label for="is_active" class="font-normal">
+                            {{ isActive ? 'Active' : 'Inactive' }}
+                        </Label>
+                    </div>
+                    <p v-if="model.errors.is_active" class="text-sm text-destructive">
+                        {{ model.errors.is_active }}
+                    </p>
+                </div>
             </div>
         </div>
     </div>

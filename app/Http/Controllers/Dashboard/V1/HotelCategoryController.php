@@ -7,7 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Based\Momentum\Modal;
+use Momentum\Modal\Modal;
 use Modules\Hotel\Http\Resources\HotelCategoryResource;
 use Modules\Hotel\Models\HotelCategory;
 use Modules\Hotel\Services\HotelCategoryService;

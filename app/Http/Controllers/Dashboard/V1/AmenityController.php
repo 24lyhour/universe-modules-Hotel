@@ -7,7 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Based\Momentum\Modal;
+use Momentum\Modal\Modal;
 use Modules\Hotel\Http\Resources\AmenityResource;
 use Modules\Hotel\Models\Amenity;
 use Modules\Hotel\Services\AmenityService;

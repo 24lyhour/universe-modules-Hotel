@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use Based\Momentum\Modal;
+use Momentum\Modal\Modal;
 use Modules\Hotel\Enums\HotelStatusEnum;
 use Modules\Hotel\Http\Requests\StoreHotelRequest;
 use Modules\Hotel\Http\Requests\UpdateHotelRequest;
