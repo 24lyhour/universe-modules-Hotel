@@ -189,7 +189,7 @@ const isAvailable = computed({
         <div class="space-y-2">
             <Label for="is_available">Availability</Label>
             <div class="flex items-center space-x-2 pt-1">
-                <Switch id="is_available" :checked="isAvailable" @update:checked="isAvailable = $event" />
+                <Switch id="is_available" v-model="isAvailable" />
                 <Label for="is_available" class="font-normal">
                     {{ isAvailable ? 'Available for booking' : 'Not available' }}
                 </Label>

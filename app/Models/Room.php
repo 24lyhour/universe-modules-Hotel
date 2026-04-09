@@ -63,24 +63,6 @@ class Room extends Model
                 $room->uuid = (string) Str::uuid();
             }
         });
-
-        static::created(function (Room $room) {
-            $room->hotel?->syncPricesFromRooms();
-        });
-
-        static::updated(function (Room $room) {
-            if ($room->isDirty(['price', 'discount_price'])) {
-                $room->hotel?->syncPricesFromRooms();
-            }
-        });
-
-        static::deleted(function (Room $room) {
-            $room->hotel?->syncPricesFromRooms();
-        });
-
-        static::restored(function (Room $room) {
-            $room->hotel?->syncPricesFromRooms();
-        });
     }
 
     public function getRouteKeyName(): string

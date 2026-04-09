@@ -73,8 +73,8 @@ const hasLocation = computed(() => mapLatitude.value !== null && mapLongitude.va
         </div>
 
         <!-- Featured Image -->
-        <div v-if="hotel.featured_image" class="overflow-hidden rounded-lg bg-muted">
-            <img :src="hotel.featured_image" :alt="hotel.name" class="max-h-[400px] w-full object-contain" />
+        <div v-if="hotel.featured_image" class="overflow-hidden rounded-lg bg-black/5">
+            <img :src="hotel.featured_image" :alt="hotel.name" class="mx-auto max-h-[450px] object-cover" />
         </div>
 
         <div class="grid gap-6 lg:grid-cols-3">

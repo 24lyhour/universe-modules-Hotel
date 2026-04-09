@@ -72,13 +72,13 @@ const handleSubmit = () => {
 
                     <div class="space-y-2">
                         <Label for="latitude">Latitude</Label>
-                        <Input id="latitude" v-model.number="form.latitude" type="number" step="0.0000001" placeholder="e.g. 11.5564" />
+                        <Input id="latitude" :model-value="form.latitude ?? undefined" @update:model-value="(v: any) => (form.latitude = v !== '' ? Number(v) : null)" type="number" step="0.0000001" placeholder="e.g. 11.5564" />
                         <p v-if="form.errors.latitude" class="text-sm text-destructive">{{ form.errors.latitude }}</p>
                     </div>
 
                     <div class="space-y-2">
                         <Label for="longitude">Longitude</Label>
-                        <Input id="longitude" v-model.number="form.longitude" type="number" step="0.0000001" placeholder="e.g. 104.9282" />
+                        <Input id="longitude" :model-value="form.longitude ?? undefined" @update:model-value="(v: any) => (form.longitude = v !== '' ? Number(v) : null)" type="number" step="0.0000001" placeholder="e.g. 104.9282" />
                         <p v-if="form.errors.longitude" class="text-sm text-destructive">{{ form.errors.longitude }}</p>
                     </div>
 

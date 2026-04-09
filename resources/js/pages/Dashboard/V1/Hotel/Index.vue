@@ -229,8 +229,14 @@ const getStatusVariant = (status: string) => {
 
             <template #cell-min_price="{ item }">
                 <div v-if="item.min_price !== null">
-                    <span class="font-medium">{{ formatCurrency(item.min_price) }}</span>
-                    <span v-if="item.max_price && item.max_price !== item.min_price" class="text-xs text-muted-foreground"> - {{ formatCurrency(item.max_price) }}</span>
+                    <div class="flex items-center gap-1">
+                        <span class="font-medium">{{ formatCurrency(item.min_price) }}</span>
+                        <span v-if="item.max_price && item.max_price !== item.min_price" class="text-xs text-muted-foreground">- {{ formatCurrency(item.max_price) }}</span>
+                    </div>
+                    <div v-if="item.discount_price" class="flex items-center gap-1">
+                        <span class="text-xs text-destructive line-through">{{ formatCurrency(item.discount_price) }}</span>
+                        <Badge v-if="item.discount_percentage" variant="destructive" class="text-[10px] px-1 py-0">-{{ item.discount_percentage }}%</Badge>
+                    </div>
                 </div>
                 <span v-else class="text-muted-foreground text-sm">No rooms</span>
             </template>
