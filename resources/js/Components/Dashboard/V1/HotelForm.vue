@@ -354,7 +354,7 @@ const mapLongitude = computed(() => model.value.longitude != null ? Number(model
         <div class="space-y-2">
             <Label for="is_featured">Featured Hotel</Label>
             <div class="flex items-center space-x-2 pt-1">
-                <Switch id="is_featured" :checked="isActive" @update:checked="isActive = $event" />
+                <Switch id="is_featured" v-model="isActive" />
                 <Label for="is_featured" class="font-normal">
                     {{ isActive ? 'Featured' : 'Not Featured' }}
                 </Label>

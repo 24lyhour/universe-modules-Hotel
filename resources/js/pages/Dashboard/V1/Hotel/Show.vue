@@ -74,7 +74,7 @@ const hasLocation = computed(() => mapLatitude.value !== null && mapLongitude.va
 
         <!-- Featured Image -->
         <div v-if="hotel.featured_image" class="overflow-hidden rounded-lg bg-muted">
-            <img :src="hotel.featured_image" :alt="hotel.name" class="h-64 w-full object-cover" />
+            <img :src="hotel.featured_image" :alt="hotel.name" class="max-h-[400px] w-full object-contain" />
         </div>
 
         <div class="grid gap-6 lg:grid-cols-3">
@@ -227,9 +227,10 @@ const hasLocation = computed(() => mapLatitude.value !== null && mapLongitude.va
                                 to {{ formatCurrency(hotel.max_price) }}
                             </p>
                             <p class="text-sm text-muted-foreground">per night (from rooms)</p>
-                            <div v-if="hotel.min_discount_price" class="mt-1">
+                            <div v-if="hotel.discount_price" class="mt-1">
                                 <Badge variant="destructive">
-                                    Discount from {{ formatCurrency(hotel.min_discount_price) }}
+                                    {{ formatCurrency(hotel.discount_price) }}
+                                    <span v-if="hotel.discount_percentage"> (-{{ hotel.discount_percentage }}%)</span>
                                 </Badge>
                             </div>
                         </div>

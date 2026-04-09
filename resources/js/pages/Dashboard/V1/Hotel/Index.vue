@@ -5,6 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { Hotel, HotelStats, HotelCategory, Province, StatusOption, PaginatedResponse } from '../../../../types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableReusable, StatsCard, ButtonGroup } from '@/components/shared';
@@ -37,6 +38,7 @@ const columns: TableColumn<Hotel>[] = [
     { key: 'star_rating', label: 'Stars', align: 'center' },
     { key: 'min_price', label: 'Price/Night', align: 'right' },
     { key: 'status', label: 'Status' },
+    { key: 'is_featured', label: 'Featured' },
     { key: 'rooms_count', label: 'Rooms', align: 'center' },
     { key: 'created_at', label: 'Created' },
 ];
@@ -235,6 +237,18 @@ const getStatusVariant = (status: string) => {
 
             <template #cell-status="{ item }">
                 <Badge :variant="getStatusVariant(item.status)">{{ item.status }}</Badge>
+            </template>
+
+            <template #cell-is_featured="{ item }">
+                <div class="flex items-center gap-2" @click.stop>
+                    <Switch
+                        :model-value="item.is_featured"
+                        @update:model-value="router.patch(`/dashboard/hotels/${item.uuid}/toggle-featured`, {}, { preserveState: true, preserveScroll: true })"
+                    />
+                    <span class="text-sm text-muted-foreground">
+                        {{ item.is_featured ? 'Yes' : 'No' }}
+                    </span>
+                </div>
             </template>
 
             <template #cell-created_at="{ item }">
