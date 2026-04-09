@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\AmenityController;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\HotelCategoryController;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\HotelController;
+use Modules\Hotel\Http\Controllers\Dashboard\V1\ProvinceController;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\RoomController;
 
 Route::middleware(['auth', 'verified', 'auto.permission'])
@@ -18,6 +19,7 @@ Route::middleware(['auth', 'verified', 'auto.permission'])
         Route::delete('hotel-categories/{uuid}/force-delete', [HotelCategoryController::class, 'forceDelete'])->name('hotel.categories.force-delete');
         Route::delete('hotel-categories/bulk-delete', [HotelCategoryController::class, 'bulkDelete'])->name('hotel.categories.bulk-delete');
         Route::patch('hotel-categories/{category}/toggle-active', [HotelCategoryController::class, 'toggleActive'])->name('hotel.categories.toggle-active');
+        Route::get('hotel-categories/{category}/delete', [HotelCategoryController::class, 'confirmDelete'])->name('hotel.categories.confirm-delete');
 
         Route::resource('hotel-categories', HotelCategoryController::class)
             ->parameters(['hotel-categories' => 'category'])
@@ -36,6 +38,16 @@ Route::middleware(['auth', 'verified', 'auto.permission'])
         Route::resource('hotel-amenities', AmenityController::class)
             ->parameters(['hotel-amenities' => 'amenity'])
             ->names('hotel.amenities');
+
+        // ---------------------------------------------------------------
+        // Provinces
+        // ---------------------------------------------------------------
+        Route::patch('hotel-provinces/{province}/toggle-active', [ProvinceController::class, 'toggleActive'])->name('hotel.provinces.toggle-active');
+        Route::get('hotel-provinces/{province}/delete', [ProvinceController::class, 'confirmDelete'])->name('hotel.provinces.confirm-delete');
+
+        Route::resource('hotel-provinces', ProvinceController::class)
+            ->parameters(['hotel-provinces' => 'province'])
+            ->names('hotel.provinces');
 
         // ---------------------------------------------------------------
         // Hotels

@@ -4,124 +4,106 @@ namespace Modules\Hotel\Http\Controllers\Dashboard\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Momentum\Modal\Modal;
+use Modules\Hotel\Actions\Dashboard\V1\HotelAction\BulkDeleteHotelsAction;
+use Modules\Hotel\Actions\Dashboard\V1\HotelAction\CreateHotelAction;
+use Modules\Hotel\Actions\Dashboard\V1\HotelAction\DeleteHotelAction;
+use Modules\Hotel\Actions\Dashboard\V1\HotelAction\GetHotelCreateDataAction;
+use Modules\Hotel\Actions\Dashboard\V1\HotelAction\GetHotelEditDataAction;
+use Modules\Hotel\Actions\Dashboard\V1\HotelAction\GetHotelIndexDataAction;
+use Modules\Hotel\Actions\Dashboard\V1\HotelAction\GetHotelShowDataAction;
+use Modules\Hotel\Actions\Dashboard\V1\HotelAction\ToggleHotelFeaturedAction;
+use Modules\Hotel\Actions\Dashboard\V1\HotelAction\UpdateHotelAction;
+use Modules\Hotel\Actions\Dashboard\V1\HotelAction\UpdateHotelStatusAction;
 use Modules\Hotel\Enums\HotelStatusEnum;
-use Modules\Hotel\Http\Requests\StoreHotelRequest;
-use Modules\Hotel\Http\Requests\UpdateHotelRequest;
+use Modules\Hotel\Http\Requests\Dashboard\V1\HotelRequest\BulkDeleteHotelsRequest;
+use Modules\Hotel\Http\Requests\Dashboard\V1\HotelRequest\StoreHotelRequest;
+use Modules\Hotel\Http\Requests\Dashboard\V1\HotelRequest\UpdateHotelRequest;
 use Modules\Hotel\Http\Resources\HotelResource;
 use Modules\Hotel\Models\Hotel;
-use Modules\Hotel\Models\HotelCategory;
-use Modules\Hotel\Models\Province;
-use Modules\Hotel\Services\HotelService;
 
 class HotelController extends Controller
 {
-    public function __construct(
-        protected HotelService $hotelService
-    ) {}
-
-    public function index(): Response
+    public function index(Request $request, GetHotelIndexDataAction $action): Response
     {
-        $filters = request()->only(['search', 'status', 'province', 'city', 'category', 'star_rating', 'is_featured', 'min_price', 'max_price']);
-        $hotels = $this->hotelService->paginate(15, $filters);
-        $stats = $this->hotelService->getStats();
+        $filters = $request->only(['search', 'status', 'province', 'city', 'category', 'star_rating', 'is_featured', 'min_price', 'max_price']);
 
-        return Inertia::render('hotel::Dashboard/V1/Hotel/Index', [
-            'hotels' => HotelResource::collection($hotels)->response()->getData(true),
-            'stats' => $stats,
-            'filters' => $filters,
-            'categories' => HotelCategory::active()->orderBy('sort_order')->get(['id', 'uuid', 'name']),
-            'provinces' => Province::active()->orderBy('sort_order')->get(['id', 'uuid', 'name', 'name_kh', 'code']),
-            'statuses' => HotelStatusEnum::options(),
-        ]);
+        return Inertia::render('hotel::Dashboard/V1/Hotel/Index', $action->execute(15, $filters));
     }
 
-    public function create(): Modal
+    public function create(GetHotelCreateDataAction $action): Modal
     {
-        return Inertia::modal('hotel::Dashboard/V1/Hotel/Create', [
-            'categories' => HotelCategory::active()->orderBy('sort_order')->get(['id', 'uuid', 'name']),
-            'provinces' => Province::active()->orderBy('sort_order')->get(['id', 'uuid', 'name', 'name_kh', 'code']),
-            'statuses' => HotelStatusEnum::options(),
-        ])->baseRoute('hotel.hotels.index');
+        return Inertia::modal('hotel::Dashboard/V1/Hotel/Create', $action->execute())
+            ->baseRoute('hotel.hotels.index');
     }
 
-    public function store(StoreHotelRequest $request): RedirectResponse
+    public function store(StoreHotelRequest $request, CreateHotelAction $action): RedirectResponse
     {
-        $this->hotelService->create($request->validated());
+        $action->execute($request->validated());
 
         return redirect()
             ->route('hotel.hotels.index')
             ->with('success', 'Hotel created successfully.');
     }
 
-    public function show(Hotel $hotel): Response
+    public function show(Hotel $hotel, GetHotelShowDataAction $action): Response
     {
-        $hotel->load(['category', 'province', 'user', 'rooms', 'createdBy', 'updatedBy']);
-
-        return Inertia::render('hotel::Dashboard/V1/Hotel/Show', [
-            'hotel' => new HotelResource($hotel),
-        ]);
+        return Inertia::render('hotel::Dashboard/V1/Hotel/Show', $action->execute($hotel));
     }
 
-    public function edit(Hotel $hotel): Modal
+    public function edit(Hotel $hotel, GetHotelEditDataAction $action): Modal
     {
-        $hotel->load(['category', 'province']);
-
-        return Inertia::modal('hotel::Dashboard/V1/Hotel/Edit', [
-            'hotel' => new HotelResource($hotel),
-            'categories' => HotelCategory::active()->orderBy('sort_order')->get(['id', 'uuid', 'name']),
-            'provinces' => Province::active()->orderBy('sort_order')->get(['id', 'uuid', 'name', 'name_kh', 'code']),
-            'statuses' => HotelStatusEnum::options(),
-        ])->baseRoute('hotel.hotels.index');
+        return Inertia::modal('hotel::Dashboard/V1/Hotel/Edit', $action->execute($hotel))
+            ->baseRoute('hotel.hotels.index');
     }
 
-    public function update(UpdateHotelRequest $request, Hotel $hotel): RedirectResponse
+    public function confirmDelete(Hotel $hotel, GetHotelShowDataAction $action): Modal
     {
-        $this->hotelService->update($hotel, $request->validated());
+        return Inertia::modal('hotel::Dashboard/V1/Hotel/Delete', $action->execute($hotel))
+            ->baseRoute('hotel.hotels.index');
+    }
+
+    public function update(UpdateHotelRequest $request, Hotel $hotel, UpdateHotelAction $action): RedirectResponse
+    {
+        $action->execute($hotel, $request->validated());
 
         return redirect()
             ->route('hotel.hotels.index')
             ->with('success', 'Hotel updated successfully.');
     }
 
-    public function destroy(Hotel $hotel): RedirectResponse
+    public function destroy(Hotel $hotel, DeleteHotelAction $action): RedirectResponse
     {
-        $this->hotelService->delete($hotel);
+        $action->execute($hotel);
 
         return redirect()
             ->route('hotel.hotels.index')
             ->with('success', 'Hotel deleted successfully.');
     }
 
-    public function confirmDelete(Hotel $hotel): Modal
+    public function toggleFeatured(Hotel $hotel, ToggleHotelFeaturedAction $action): RedirectResponse
     {
-        return Inertia::modal('hotel::Dashboard/V1/Hotel/ConfirmDelete', [
-            'hotel' => new HotelResource($hotel),
-        ])->baseRoute('hotel.hotels.index');
-    }
-
-    public function toggleFeatured(Hotel $hotel): RedirectResponse
-    {
-        $this->hotelService->toggleFeatured($hotel);
+        $action->execute($hotel);
 
         return redirect()->back()->with('success', 'Hotel featured status updated.');
     }
 
-    public function updateStatus(Hotel $hotel): RedirectResponse
+    public function updateStatus(Request $request, Hotel $hotel, UpdateHotelStatusAction $action): RedirectResponse
     {
-        $status = HotelStatusEnum::from(request('status'));
-        $this->hotelService->updateStatus($hotel, $status);
+        $status = HotelStatusEnum::from($request->input('status'));
+        $action->execute($hotel, $status);
 
         return redirect()->back()->with('success', 'Hotel status updated.');
     }
 
-    // Trash management
+    // Trash
 
     public function trash(): Response
     {
-        $hotels = $this->hotelService->getTrashed();
+        $hotels = Hotel::onlyTrashed()->with(['category', 'user'])->latest('deleted_at')->paginate(15);
 
         return Inertia::render('hotel::Dashboard/V1/Hotel/Trash', [
             'hotels' => HotelResource::collection($hotels)->response()->getData(true),
@@ -130,14 +112,22 @@ class HotelController extends Controller
 
     public function restore(string $uuid): RedirectResponse
     {
-        $this->hotelService->restore($uuid);
+        $hotel = Hotel::onlyTrashed()->where('uuid', $uuid)->first();
+
+        if ($hotel) {
+            $hotel->restore();
+        }
 
         return redirect()->back()->with('success', 'Hotel restored successfully.');
     }
 
     public function forceDelete(string $uuid): RedirectResponse
     {
-        $this->hotelService->forceDelete($uuid);
+        $hotel = Hotel::onlyTrashed()->where('uuid', $uuid)->first();
+
+        if ($hotel) {
+            $hotel->forceDelete();
+        }
 
         return redirect()->back()->with('success', 'Hotel permanently deleted.');
     }
@@ -151,27 +141,26 @@ class HotelController extends Controller
         ])->baseRoute('hotel.hotels.index');
     }
 
-    public function bulkDelete(): RedirectResponse
+    public function bulkDelete(BulkDeleteHotelsRequest $request, BulkDeleteHotelsAction $action): RedirectResponse
     {
-        $uuids = request('uuids', []);
-        $this->hotelService->bulkDelete($uuids);
+        $action->execute($request->validated()['uuids']);
 
         return redirect()
             ->route('hotel.hotels.index')
             ->with('success', 'Selected hotels deleted.');
     }
 
-    public function bulkRestore(): RedirectResponse
+    public function bulkRestore(Request $request): RedirectResponse
     {
-        $uuids = request('uuids', []);
-        $this->hotelService->bulkRestore($uuids);
+        $uuids = $request->input('uuids', []);
+        Hotel::onlyTrashed()->whereIn('uuid', $uuids)->restore();
 
         return redirect()->back()->with('success', 'Selected hotels restored.');
     }
 
     public function emptyTrash(): RedirectResponse
     {
-        $this->hotelService->emptyTrash();
+        Hotel::onlyTrashed()->forceDelete();
 
         return redirect()->back()->with('success', 'Trash emptied successfully.');
     }
