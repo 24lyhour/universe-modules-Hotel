@@ -15,8 +15,8 @@ export interface Hotel {
     price_level: string | null;
     min_price: number | null;
     max_price: number | null;
-    min_discount_price: number | null;
-    max_discount_price: number | null;
+    discount_price: number | null;
+    discount_percentage: number | null;
     currency: string;
     logo_url: string | null;
     featured_image: string | null;
@@ -52,6 +52,8 @@ export interface HotelFormData {
     website: string;
     star_rating: number;
     price_level: string;
+    min_price: number | null;
+    max_price: number | null;
     currency: string;
     hotel_category_id: number | null;
     logo_url: string;

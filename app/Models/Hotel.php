@@ -39,8 +39,8 @@ class Hotel extends Model
         'price_level',
         'min_price',
         'max_price',
-        'min_discount_price',
-        'max_discount_price',
+        'discount_price',
+        'discount_percentage',
         'currency',
         'featured_image',
         'total_rooms',
@@ -62,8 +62,8 @@ class Hotel extends Model
             'amenities' => 'array',
             'min_price' => 'decimal:2',
             'max_price' => 'decimal:2',
-            'min_discount_price' => 'decimal:2',
-            'max_discount_price' => 'decimal:2',
+            'discount_price' => 'decimal:2',
+            'discount_percentage' => 'integer',
             'star_rating' => 'integer',
             'total_rooms' => 'integer',
             'total_floors' => 'integer',
@@ -173,11 +173,19 @@ class Hotel extends Model
         $prices = $rooms->pluck('price')->filter();
         $discounts = $rooms->pluck('discount_price')->filter();
 
+        $minPrice = $prices->isNotEmpty() ? $prices->min() : null;
+        $discountPrice = $discounts->isNotEmpty() ? $discounts->min() : null;
+
+        $discountPercentage = null;
+        if ($minPrice && $discountPrice && $discountPrice < $minPrice) {
+            $discountPercentage = (int) round((($minPrice - $discountPrice) / $minPrice) * 100);
+        }
+
         $this->updateQuietly([
-            'min_price' => $prices->isNotEmpty() ? $prices->min() : null,
+            'min_price' => $minPrice,
             'max_price' => $prices->isNotEmpty() ? $prices->max() : null,
-            'min_discount_price' => $discounts->isNotEmpty() ? $discounts->min() : null,
-            'max_discount_price' => $discounts->isNotEmpty() ? $discounts->max() : null,
+            'discount_price' => $discountPrice,
+            'discount_percentage' => $discountPercentage,
         ]);
     }
 }

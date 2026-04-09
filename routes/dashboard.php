@@ -67,6 +67,10 @@ Route::middleware(['auth', 'verified', 'auto.permission'])
         Route::patch('hotels/{hotel}/toggle-featured', [HotelController::class, 'toggleFeatured'])->name('hotel.hotels.toggle-featured');
         Route::patch('hotels/{hotel}/update-status', [HotelController::class, 'updateStatus'])->name('hotel.hotels.update-status');
 
+        // Discount modal
+        Route::get('hotels/{hotel}/discount', [HotelController::class, 'discount'])->name('hotel.hotels.discount');
+        Route::patch('hotels/{hotel}/discount', [HotelController::class, 'updateDiscount'])->name('hotel.hotels.update-discount');
+
         // Confirm delete modal
         Route::get('hotels/{hotel}/confirm-delete', [HotelController::class, 'confirmDelete'])->name('hotel.hotels.confirm-delete');
 

@@ -10,11 +10,20 @@ import type { HotelFormData, HotelCategory, Province, StatusOption } from '../..
 import { computed } from 'vue';
 import TiptapEditor from '@/components/TiptapEditor.vue';
 
+interface PriceInfo {
+    min_price: number | null;
+    max_price: number | null;
+    discount_price: number | null;
+    discount_percentage: number | null;
+    currency: string;
+}
+
 interface Props {
     mode?: 'create' | 'edit';
     categories?: HotelCategory[];
     provinces?: Province[];
     statuses?: StatusOption[];
+    priceInfo?: PriceInfo | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -22,7 +31,11 @@ const props = withDefaults(defineProps<Props>(), {
     categories: () => [],
     provinces: () => [],
     statuses: () => [],
+    priceInfo: null,
 });
+
+const formatCurrency = (value: number, currency: string = 'USD') =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(value);
 
 const model = defineModel<InertiaForm<HotelFormData>>({ required: true });
 
@@ -91,7 +104,7 @@ const mapLongitude = computed(() => model.value.longitude != null ? Number(model
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="category">Category</Label>
+                    <Label for="category">Category <span class="text-destructive">*</span></Label>
                     <Select v-model="categoryIdString">
                         <SelectTrigger>
                             <SelectValue placeholder="Select category" />
@@ -171,7 +184,7 @@ const mapLongitude = computed(() => model.value.longitude != null ? Number(model
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="province_id">Province</Label>
+                    <Label for="province_id">Province <span class="text-destructive">*</span></Label>
                     <Select v-model="provinceIdString">
                         <SelectTrigger>
                             <SelectValue placeholder="Select province" />
@@ -244,11 +257,34 @@ const mapLongitude = computed(() => model.value.longitude != null ? Number(model
             </div>
         </div>
 
+        <!-- Pricing -->
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Pricing</h3>
+                <p class="text-sm text-muted-foreground">Price range and discount</p>
+            </div>
+            <Separator />
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-2">
+                    <Label for="min_price">Min Price / Night</Label>
+                    <Input id="min_price" :model-value="model.min_price ?? undefined" @update:model-value="(v: any) => (model.min_price = v !== '' ? Number(v) : null)" type="number" step="0.01" min="0" placeholder="0.00" />
+                    <p v-if="model.errors.min_price" class="text-sm text-destructive">{{ model.errors.min_price }}</p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="max_price">Max Price / Night</Label>
+                    <Input id="max_price" :model-value="model.max_price ?? undefined" @update:model-value="(v: any) => (model.max_price = v !== '' ? Number(v) : null)" type="number" step="0.01" min="0" placeholder="0.00" />
+                    <p v-if="model.errors.max_price" class="text-sm text-destructive">{{ model.errors.max_price }}</p>
+                </div>
+
+            </div>
+        </div>
+
         <!-- Rating & Currency -->
         <div class="space-y-4">
             <div>
                 <h3 class="text-sm font-medium">Rating & Currency</h3>
-                <p class="text-sm text-muted-foreground">Star rating and currency (prices are set per room)</p>
+                <p class="text-sm text-muted-foreground">Star rating and currency</p>
             </div>
             <Separator />
             <div class="grid gap-4 sm:grid-cols-3">
@@ -280,7 +316,7 @@ const mapLongitude = computed(() => model.value.longitude != null ? Number(model
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="price_level">Price Level</Label>
+                    <Label for="price_level">Price Level <span class="text-destructive">*</span></Label>
                     <Select v-model="model.price_level">
                         <SelectTrigger>
                             <SelectValue placeholder="Select level" />

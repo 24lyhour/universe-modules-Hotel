@@ -75,6 +75,27 @@ class HotelController extends Controller
             ->with('success', 'Hotel updated successfully.');
     }
 
+    public function discount(Hotel $hotel): Modal
+    {
+        return Inertia::modal('hotel::Dashboard/V1/Hotel/Discount', [
+            'hotel' => (new HotelResource($hotel))->resolve(),
+        ])->baseRoute('hotel.hotels.index');
+    }
+
+    public function updateDiscount(Request $request, Hotel $hotel): RedirectResponse
+    {
+        $validated = $request->validate([
+            'discount_price' => ['nullable', 'numeric', 'min:0'],
+            'discount_percentage' => ['nullable', 'integer', 'min:0', 'max:100'],
+        ]);
+
+        $hotel->update($validated);
+
+        return redirect()
+            ->route('hotel.hotels.index')
+            ->with('success', 'Hotel discount updated.');
+    }
+
     public function destroy(Hotel $hotel, DeleteHotelAction $action): RedirectResponse
     {
         $action->execute($hotel);

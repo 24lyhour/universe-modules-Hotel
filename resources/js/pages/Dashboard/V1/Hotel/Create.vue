@@ -38,6 +38,8 @@ const form = useForm<HotelFormData>({
     website: '',
     star_rating: 3,
     price_level: '',
+    min_price: null,
+    max_price: null,
     currency: 'USD',
     hotel_category_id: null,
     logo_url: '',

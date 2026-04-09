@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableReusable, StatsCard, ButtonGroup } from '@/components/shared';
 import type { TableColumn, TableAction, PaginationData } from '@/components/shared';
-import { Plus, Eye, Pencil, Trash2, Star, Hotel as HotelIcon, Search, X, Database, CheckCircle } from 'lucide-vue-next';
+import { Plus, Eye, Pencil, Trash2, Star, Hotel as HotelIcon, Search, X, Database, CheckCircle, DollarSign } from 'lucide-vue-next';
 
 defineOptions({
     layout: (h_: typeof h, page: VNode) =>
@@ -44,7 +44,8 @@ const columns: TableColumn<Hotel>[] = [
 const tableActions: TableAction<Hotel>[] = [
     { label: 'View', icon: Eye, onClick: (item) => router.visit(`/dashboard/hotels/${item.uuid}`) },
     { label: 'Edit', icon: Pencil, onClick: (item) => router.visit(`/dashboard/hotels/${item.uuid}/edit`) },
-    { label: 'Delete', icon: Trash2, onClick: (item) => router.visit(`/dashboard/hotels/${item.uuid}/confirm-delete`), variant: 'destructive', separator: true },
+    { label: 'Discount', icon: DollarSign, onClick: (item) => router.visit(`/dashboard/hotels/${item.uuid}/discount`), separator: true },
+    { label: 'Delete', icon: Trash2, onClick: (item) => router.visit(`/dashboard/hotels/${item.uuid}/confirm-delete`), variant: 'destructive' },
 ];
 
 const hasActiveFilters = computed(() => !!(

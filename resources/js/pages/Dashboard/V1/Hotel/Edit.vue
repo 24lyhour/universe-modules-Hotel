@@ -39,6 +39,8 @@ const form = useForm<HotelFormData>({
     website: props.hotel.website ?? '',
     star_rating: props.hotel.star_rating,
     price_level: props.hotel.price_level ?? '',
+    min_price: props.hotel.min_price,
+    max_price: props.hotel.max_price,
     currency: props.hotel.currency,
     hotel_category_id: props.hotel.category?.id ?? null,
     logo_url: props.hotel.logo_url ?? '',
@@ -74,6 +76,19 @@ const handleSubmit = () => {
         :disabled="isFormInvalid"
         @submit="handleSubmit"
     >
-        <HotelForm v-model="form" mode="edit" :categories="categories" :provinces="provinces" :statuses="statuses" />
+        <HotelForm
+            v-model="form"
+            mode="edit"
+            :categories="categories"
+            :provinces="provinces"
+            :statuses="statuses"
+            :price-info="{
+                min_price: hotel.min_price,
+                max_price: hotel.max_price,
+                discount_price: hotel.discount_price,
+                discount_percentage: hotel.discount_percentage,
+                currency: hotel.currency,
+            }"
+        />
     </ModalForm>
 </template>
