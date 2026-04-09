@@ -4,6 +4,7 @@ namespace Modules\Hotel\Http\Controllers\Dashboard\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Based\Momentum\Modal;
@@ -17,14 +18,21 @@ class AmenityController extends Controller
         protected AmenityService $amenityService
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $filters = request()->only(['search', 'is_active', 'group']);
-        $amenities = $this->amenityService->paginate(15, $filters);
+        $perPage = $request->input('per_page', 10);
+        $filters = $request->only(['search', 'is_active', 'group']);
+        $amenities = $this->amenityService->paginate($perPage, $filters);
 
         return Inertia::render('hotel::Dashboard/V1/Amenity/Index', [
             'amenities' => AmenityResource::collection($amenities)->response()->getData(true),
             'filters' => $filters,
+            'stats' => [
+                'total' => \Modules\Hotel\Models\Amenity::count(),
+                'active' => \Modules\Hotel\Models\Amenity::where('is_active', true)->count(),
+                'inactive' => \Modules\Hotel\Models\Amenity::where('is_active', false)->count(),
+                'trashed' => \Modules\Hotel\Models\Amenity::onlyTrashed()->count(),
+            ],
         ]);
     }
 

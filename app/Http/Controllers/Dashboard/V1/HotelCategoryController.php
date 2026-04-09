@@ -4,6 +4,7 @@ namespace Modules\Hotel\Http\Controllers\Dashboard\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Based\Momentum\Modal;
@@ -17,14 +18,21 @@ class HotelCategoryController extends Controller
         protected HotelCategoryService $categoryService
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $filters = request()->only(['search', 'is_active']);
-        $categories = $this->categoryService->paginate(15, $filters);
+        $perPage = $request->input('per_page', 10);
+        $filters = $request->only(['search', 'is_active']);
+        $categories = $this->categoryService->paginate($perPage, $filters);
 
         return Inertia::render('hotel::Dashboard/V1/HotelCategory/Index', [
             'categories' => HotelCategoryResource::collection($categories)->response()->getData(true),
             'filters' => $filters,
+            'stats' => [
+                'total' => \Modules\Hotel\Models\HotelCategory::count(),
+                'active' => \Modules\Hotel\Models\HotelCategory::where('is_active', true)->count(),
+                'inactive' => \Modules\Hotel\Models\HotelCategory::where('is_active', false)->count(),
+                'trashed' => \Modules\Hotel\Models\HotelCategory::onlyTrashed()->count(),
+            ],
         ]);
     }
 
