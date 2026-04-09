@@ -1,0 +1,133 @@
+<?php
+
+namespace Modules\Hotel\Http\Controllers\Dashboard\V1;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
+use Based\Momentum\Modal;
+use Modules\Hotel\Enums\RoomStatusEnum;
+use Modules\Hotel\Http\Requests\StoreRoomRequest;
+use Modules\Hotel\Http\Requests\UpdateRoomRequest;
+use Modules\Hotel\Http\Resources\RoomResource;
+use Modules\Hotel\Models\Hotel;
+use Modules\Hotel\Models\Room;
+use Modules\Hotel\Services\RoomService;
+
+class RoomController extends Controller
+{
+    public function __construct(
+        protected RoomService $roomService
+    ) {}
+
+    public function index(Hotel $hotel): Response
+    {
+        $filters = request()->only(['search', 'status', 'room_type', 'is_available', 'min_price', 'max_price']);
+        $rooms = $this->roomService->paginate($hotel, 15, $filters);
+
+        return Inertia::render('hotel::Dashboard/V1/Room/Index', [
+            'hotel' => $hotel->only(['id', 'uuid', 'name']),
+            'rooms' => RoomResource::collection($rooms)->response()->getData(true),
+            'filters' => $filters,
+            'statuses' => RoomStatusEnum::options(),
+        ]);
+    }
+
+    public function create(Hotel $hotel): Modal
+    {
+        return Inertia::modal('hotel::Dashboard/V1/Room/Create', [
+            'hotel' => $hotel->only(['id', 'uuid', 'name']),
+            'statuses' => RoomStatusEnum::options(),
+        ])->baseRoute('hotel.hotels.rooms.index', ['hotel' => $hotel]);
+    }
+
+    public function store(StoreRoomRequest $request, Hotel $hotel): RedirectResponse
+    {
+        $this->roomService->create($hotel, $request->validated());
+
+        return redirect()
+            ->route('hotel.hotels.rooms.index', ['hotel' => $hotel])
+            ->with('success', 'Room created successfully.');
+    }
+
+    public function show(Hotel $hotel, Room $room): Response
+    {
+        $room->load('hotel');
+
+        return Inertia::render('hotel::Dashboard/V1/Room/Show', [
+            'hotel' => $hotel->only(['id', 'uuid', 'name']),
+            'room' => new RoomResource($room),
+        ]);
+    }
+
+    public function edit(Hotel $hotel, Room $room): Modal
+    {
+        return Inertia::modal('hotel::Dashboard/V1/Room/Edit', [
+            'hotel' => $hotel->only(['id', 'uuid', 'name']),
+            'room' => new RoomResource($room),
+            'statuses' => RoomStatusEnum::options(),
+        ])->baseRoute('hotel.hotels.rooms.index', ['hotel' => $hotel]);
+    }
+
+    public function update(UpdateRoomRequest $request, Hotel $hotel, Room $room): RedirectResponse
+    {
+        $this->roomService->update($room, $request->validated());
+
+        return redirect()
+            ->route('hotel.hotels.rooms.index', ['hotel' => $hotel])
+            ->with('success', 'Room updated successfully.');
+    }
+
+    public function destroy(Hotel $hotel, Room $room): RedirectResponse
+    {
+        $this->roomService->delete($room);
+
+        return redirect()
+            ->route('hotel.hotels.rooms.index', ['hotel' => $hotel])
+            ->with('success', 'Room deleted successfully.');
+    }
+
+    public function toggleAvailability(Hotel $hotel, Room $room): RedirectResponse
+    {
+        $this->roomService->toggleAvailability($room);
+
+        return redirect()->back()->with('success', 'Room availability updated.');
+    }
+
+    // Trash
+
+    public function trash(Hotel $hotel): Response
+    {
+        $rooms = $this->roomService->getTrashed($hotel);
+
+        return Inertia::render('hotel::Dashboard/V1/Room/Trash', [
+            'hotel' => $hotel->only(['id', 'uuid', 'name']),
+            'rooms' => RoomResource::collection($rooms)->response()->getData(true),
+        ]);
+    }
+
+    public function restore(Hotel $hotel, string $uuid): RedirectResponse
+    {
+        $this->roomService->restore($uuid);
+
+        return redirect()->back()->with('success', 'Room restored successfully.');
+    }
+
+    public function forceDelete(Hotel $hotel, string $uuid): RedirectResponse
+    {
+        $this->roomService->forceDelete($uuid);
+
+        return redirect()->back()->with('success', 'Room permanently deleted.');
+    }
+
+    public function bulkDelete(Hotel $hotel): RedirectResponse
+    {
+        $uuids = request('uuids', []);
+        $this->roomService->bulkDelete($uuids);
+
+        return redirect()
+            ->route('hotel.hotels.rooms.index', ['hotel' => $hotel])
+            ->with('success', 'Selected rooms deleted.');
+    }
+}

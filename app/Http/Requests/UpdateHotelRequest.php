@@ -3,20 +3,15 @@
 namespace Modules\Hotel\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Hotel\Enums\HotelStatusEnum;
 
 class UpdateHotelRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return auth()->check();
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [
@@ -25,23 +20,31 @@ class UpdateHotelRequest extends FormRequest
             'address' => ['sometimes', 'required', 'string', 'max:500'],
             'city' => ['sometimes', 'required', 'string', 'max:100'],
             'country' => ['sometimes', 'required', 'string', 'max:100'],
+            'provinces' => ['nullable', 'string', 'max:100'],
             'phone' => ['nullable', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:255'],
             'website' => ['nullable', 'url', 'max:255'],
             'star_rating' => ['sometimes', 'required', 'integer', 'min:1', 'max:5'],
+            'price_level' => ['nullable', 'string', 'max:50'],
             'price_per_night' => ['sometimes', 'required', 'numeric', 'min:0'],
+            'discount_price' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'max:10'],
+            'province_id' => ['nullable', 'exists:provinces,id'],
+            'hotel_category_id' => ['nullable', 'exists:hotel_categories,id'],
             'featured_image' => ['nullable', 'string', 'max:255'],
+            'total_rooms' => ['nullable', 'integer', 'min:0'],
+            'total_floors' => ['nullable', 'integer', 'min:0'],
             'gallery' => ['nullable', 'array'],
             'gallery.*' => ['string', 'max:255'],
             'amenities' => ['nullable', 'array'],
             'amenities.*' => ['string', 'max:100'],
-            'status' => ['sometimes', 'required', 'in:active,inactive'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'status' => ['sometimes', 'required', 'string', 'in:' . implode(',', HotelStatusEnum::values())],
+            'is_featured' => ['nullable', 'boolean'],
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     */
     public function messages(): array
     {
         return [
@@ -53,7 +56,7 @@ class UpdateHotelRequest extends FormRequest
             'star_rating.min' => 'The star rating must be at least 1.',
             'star_rating.max' => 'The star rating cannot exceed 5.',
             'price_per_night.required' => 'The price per night is required.',
-            'status.in' => 'The status must be either active or inactive.',
+            'status.in' => 'The status must be one of: ' . implode(', ', HotelStatusEnum::values()),
         ];
     }
 }

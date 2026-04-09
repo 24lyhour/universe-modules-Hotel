@@ -3,126 +3,212 @@
 namespace Modules\Hotel\Services;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Modules\Hotel\Contracts\HotelRepositoryInterface;
+use Modules\Hotel\Enums\HotelStatusEnum;
 use Modules\Hotel\Models\Hotel;
 
 class HotelService
 {
-    public function __construct(
-        protected HotelRepositoryInterface $hotelRepository
-    ) {}
-
-    /**
-     * Get all hotels.
-     */
-    public function getAllHotels(): Collection
+    public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        return $this->hotelRepository->all();
+        $query = Hotel::query()->with(['category', 'province', 'user', 'createdBy']);
+
+        $this->applyFilters($query, $filters);
+
+        return $query->latest()->paginate($perPage);
     }
 
-    /**
-     * Get paginated hotels.
-     */
-    public function getPaginatedHotels(int $perPage = 15): LengthAwarePaginator
+    public function find(int|string $id): ?Hotel
     {
-        return $this->hotelRepository->paginate($perPage);
+        return Hotel::with(['category', 'province', 'user', 'rooms', 'createdBy', 'updatedBy'])
+            ->where('uuid', $id)
+            ->orWhere('id', $id)
+            ->first();
     }
 
-    /**
-     * Get a hotel by ID.
-     */
-    public function getHotelById(int $id): ?Hotel
+    public function findBySlug(string $slug): ?Hotel
     {
-        return $this->hotelRepository->find($id);
+        return Hotel::with(['category', 'user', 'rooms'])
+            ->where('slug', $slug)
+            ->first();
     }
 
-    /**
-     * Get a hotel by slug.
-     */
-    public function getHotelBySlug(string $slug): ?Hotel
+    public function create(array $data): Hotel
     {
-        return $this->hotelRepository->findBySlug($slug);
+        return DB::transaction(function () use ($data) {
+            $data['uuid'] = (string) Str::uuid();
+            $data['slug'] = $this->generateUniqueSlug($data['name']);
+            $data['created_by'] = auth()->id();
+
+            $hotel = Hotel::create($data);
+
+            return $hotel;
+        });
     }
 
-    /**
-     * Create a new hotel.
-     */
-    public function createHotel(array $data): Hotel
+    public function update(Hotel $hotel, array $data): bool
     {
-        $data['slug'] = $this->generateUniqueSlug($data['name']);
-        $data['user_id'] = auth()->id();
-
-        return $this->hotelRepository->create($data);
-    }
-
-    /**
-     * Update a hotel.
-     */
-    public function updateHotel(int $id, array $data): bool
-    {
-        if (isset($data['name'])) {
-            $hotel = $this->hotelRepository->find($id);
-            if ($hotel && $hotel->name !== $data['name']) {
-                $data['slug'] = $this->generateUniqueSlug($data['name'], $id);
+        return DB::transaction(function () use ($hotel, $data) {
+            if (isset($data['name']) && $hotel->name !== $data['name']) {
+                $data['slug'] = $this->generateUniqueSlug($data['name'], $hotel->id);
             }
+
+            $data['updated_by'] = auth()->id();
+
+            $updated = $hotel->update($data);
+
+            $this->clearCache();
+
+            return $updated;
+        });
+    }
+
+    public function delete(Hotel $hotel): bool
+    {
+        $deleted = $hotel->delete();
+        $this->clearCache();
+
+        return $deleted;
+    }
+
+    public function restore(string $uuid): bool
+    {
+        $hotel = Hotel::onlyTrashed()->where('uuid', $uuid)->first();
+
+        if (!$hotel) {
+            return false;
         }
 
-        return $this->hotelRepository->update($id, $data);
+        $hotel->restore();
+        $this->clearCache();
+
+        return true;
     }
 
-    /**
-     * Delete a hotel.
-     */
-    public function deleteHotel(int $id): bool
+    public function forceDelete(string $uuid): bool
     {
-        return $this->hotelRepository->delete($id);
+        $hotel = Hotel::onlyTrashed()->where('uuid', $uuid)->first();
+
+        if (!$hotel) {
+            return false;
+        }
+
+        $hotel->forceDelete();
+        $this->clearCache();
+
+        return true;
     }
 
-    /**
-     * Get active hotels.
-     */
-    public function getActiveHotels(int $perPage = 15): LengthAwarePaginator
+    public function getTrashed(int $perPage = 15): LengthAwarePaginator
     {
-        return $this->hotelRepository->getActive($perPage);
+        return Hotel::onlyTrashed()
+            ->with(['category', 'user'])
+            ->latest('deleted_at')
+            ->paginate($perPage);
     }
 
-    /**
-     * Get hotels by city.
-     */
-    public function getHotelsByCity(string $city, int $perPage = 15): LengthAwarePaginator
+    public function getStats(): array
     {
-        return $this->hotelRepository->getByCity($city, $perPage);
+        return Cache::remember('hotel_stats', 300, function () {
+            return [
+                'total' => Hotel::count(),
+                'active' => Hotel::where('status', HotelStatusEnum::Active)->count(),
+                'inactive' => Hotel::where('status', HotelStatusEnum::Inactive)->count(),
+                'featured' => Hotel::where('is_featured', true)->count(),
+                'trashed' => Hotel::onlyTrashed()->count(),
+            ];
+        });
     }
 
-    /**
-     * Get hotels by star rating.
-     */
-    public function getHotelsByStarRating(int $rating, int $perPage = 15): LengthAwarePaginator
+    public function toggleFeatured(Hotel $hotel): bool
     {
-        return $this->hotelRepository->getByStarRating($rating, $perPage);
+        $hotel->is_featured = !$hotel->is_featured;
+        $saved = $hotel->save();
+        $this->clearCache();
+
+        return $saved;
     }
 
-    /**
-     * Get hotels by user.
-     */
-    public function getHotelsByUser(int $userId, int $perPage = 15): LengthAwarePaginator
+    public function updateStatus(Hotel $hotel, HotelStatusEnum $status): bool
     {
-        return $this->hotelRepository->getByUserId($userId, $perPage);
+        $hotel->status = $status;
+        $saved = $hotel->save();
+        $this->clearCache();
+
+        return $saved;
     }
 
-    /**
-     * Search hotels.
-     */
-    public function searchHotels(string $query, int $perPage = 15): LengthAwarePaginator
+    public function bulkDelete(array $uuids): int
     {
-        return $this->hotelRepository->search($query, $perPage);
+        $count = Hotel::whereIn('uuid', $uuids)->delete();
+        $this->clearCache();
+
+        return $count;
     }
 
-    /**
-     * Generate a unique slug for the hotel.
-     */
+    public function bulkRestore(array $uuids): int
+    {
+        $count = Hotel::onlyTrashed()->whereIn('uuid', $uuids)->restore();
+        $this->clearCache();
+
+        return $count;
+    }
+
+    public function emptyTrash(): int
+    {
+        $count = Hotel::onlyTrashed()->forceDelete();
+        $this->clearCache();
+
+        return $count;
+    }
+
+    protected function applyFilters($query, array $filters): void
+    {
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('city', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhere('country', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['province'])) {
+            $query->where('province_id', $filters['province']);
+        }
+
+        if (!empty($filters['city'])) {
+            $query->where('city', $filters['city']);
+        }
+
+        if (!empty($filters['category'])) {
+            $query->where('hotel_category_id', $filters['category']);
+        }
+
+        if (!empty($filters['star_rating'])) {
+            $query->where('star_rating', '>=', $filters['star_rating']);
+        }
+
+        if (isset($filters['is_featured'])) {
+            $query->where('is_featured', $filters['is_featured']);
+        }
+
+        if (!empty($filters['min_price'])) {
+            $query->where('price_per_night', '>=', $filters['min_price']);
+        }
+
+        if (!empty($filters['max_price'])) {
+            $query->where('price_per_night', '<=', $filters['max_price']);
+        }
+    }
+
     protected function generateUniqueSlug(string $name, ?int $excludeId = null): string
     {
         $slug = Str::slug($name);
@@ -130,9 +216,13 @@ class HotelService
         $count = 1;
 
         while (true) {
-            $existingHotel = $this->hotelRepository->findBySlug($slug);
+            $query = Hotel::where('slug', $slug);
 
-            if (! $existingHotel || ($excludeId && $existingHotel->id === $excludeId)) {
+            if ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            }
+
+            if (!$query->exists()) {
                 break;
             }
 
@@ -141,5 +231,10 @@ class HotelService
         }
 
         return $slug;
+    }
+
+    protected function clearCache(): void
+    {
+        Cache::forget('hotel_stats');
     }
 }

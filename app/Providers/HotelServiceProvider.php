@@ -4,8 +4,6 @@ namespace Modules\Hotel\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
-use Modules\Hotel\Contracts\HotelRepositoryInterface;
-use Modules\Hotel\Repositories\HotelRepository;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -42,15 +40,16 @@ class HotelServiceProvider extends ServiceProvider
                 menu: 'primary',
                 id: 'hotel',
                 title: __('Hotel'),
-                url: '/dashboard/hotel',
+                url: '/dashboard/hotels',
                 icon: 'Hotel',
                 order: 100,
                 permissions: 'hotels.view_any',
                 route: 'hotel.*'
             );
 
-            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('All Hotels'), '/dashboard/hotel', 10, 'hotels.view_any', 'hotel.index', 'List');
-            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Create Hotel'), '/dashboard/hotel/create', 20, 'hotels.create', 'hotel.create', 'Plus');
+            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('All Hotels'), '/dashboard/hotels', 10, 'hotels.view_any', 'hotel.hotels.index', 'List');
+            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Categories'), '/dashboard/hotel-categories', 15, 'hotel_categories.view_any', 'hotel.categories.index', 'LayoutGrid');
+            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Amenities'), '/dashboard/hotel-amenities', 20, 'hotel_amenities.view_any', 'hotel.amenities.index', 'Sparkles');
         });
     }
 
@@ -61,16 +60,6 @@ class HotelServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
-
-        $this->registerRepositories();
-    }
-
-    /**
-     * Register repository bindings.
-     */
-    protected function registerRepositories(): void
-    {
-        $this->app->bind(HotelRepositoryInterface::class, HotelRepository::class);
     }
 
     /**

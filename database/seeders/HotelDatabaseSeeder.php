@@ -6,11 +6,11 @@ use Illuminate\Database\Seeder;
 
 class HotelDatabaseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // $this->call([]);
+        $this->call([
+            ProvinceSeeder::class,
+            HotelSeeder::class,
+        ]);
     }
 }
