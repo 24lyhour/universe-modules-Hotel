@@ -21,6 +21,51 @@ class RoomController extends Controller
         protected RoomService $roomService
     ) {}
 
+    public function allRooms(): Response
+    {
+        $filters = request()->only(['search', 'status', 'hotel', 'is_available']);
+        $query = Room::query()->with('hotel');
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('room_type', 'like', "%{$search}%")
+                    ->orWhere('room_number', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['hotel'])) {
+            $query->where('hotel_id', $filters['hotel']);
+        }
+
+        if (isset($filters['is_available']) && $filters['is_available'] !== '') {
+            $query->where('is_available', $filters['is_available']);
+        }
+
+        $rooms = $query->latest()->paginate(15);
+        $hotels = Hotel::orderBy('name')->get(['id', 'uuid', 'name']);
+
+        return Inertia::render('hotel::Dashboard/V1/Room/Index', [
+            'hotel' => null,
+            'rooms' => RoomResource::collection($rooms)->response()->getData(true),
+            'filters' => $filters,
+            'statuses' => RoomStatusEnum::options(),
+            'hotels' => $hotels,
+            'stats' => [
+                'total' => Room::count(),
+                'active' => Room::where('status', 'active')->count(),
+                'available' => Room::where('is_available', true)->count(),
+                'maintenance' => Room::where('status', 'maintenance')->count(),
+                'trashed' => Room::onlyTrashed()->count(),
+            ],
+        ]);
+    }
+
     public function index(Hotel $hotel): Response
     {
         $filters = request()->only(['search', 'status', 'room_type', 'is_available', 'min_price', 'max_price']);
@@ -129,5 +174,31 @@ class RoomController extends Controller
         return redirect()
             ->route('hotel.hotels.rooms.index', ['hotel' => $hotel])
             ->with('success', 'Selected rooms deleted.');
+    }
+
+    // Standalone Trash (all rooms)
+
+    public function allTrashed(): Response
+    {
+        $rooms = Room::onlyTrashed()->with('hotel')->latest('deleted_at')->paginate(15);
+
+        return Inertia::render('hotel::Dashboard/V1/Room/Trash', [
+            'hotel' => null,
+            'rooms' => RoomResource::collection($rooms)->response()->getData(true),
+        ]);
+    }
+
+    public function restoreRoom(string $uuid): RedirectResponse
+    {
+        $this->roomService->restore($uuid);
+
+        return redirect()->back()->with('success', 'Room restored.');
+    }
+
+    public function forceDeleteRoom(string $uuid): RedirectResponse
+    {
+        $this->roomService->forceDelete($uuid);
+
+        return redirect()->back()->with('success', 'Room permanently deleted.');
     }
 }

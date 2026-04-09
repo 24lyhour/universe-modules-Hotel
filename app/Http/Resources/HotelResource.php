@@ -30,6 +30,7 @@ class HotelResource extends JsonResource
             'discount_percentage' => $this->discount_percentage,
             'is_on_sale' => $this->isOnSale(),
             'currency' => $this->currency,
+            'logo_url' => $this->logo_url,
             'featured_image' => $this->featured_image,
             'total_rooms' => $this->total_rooms,
             'total_floors' => $this->total_floors,

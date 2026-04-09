@@ -31,6 +31,7 @@ class UpdateHotelRequest extends FormRequest
             'currency' => ['nullable', 'string', 'max:10'],
             'province_id' => ['nullable', 'exists:provinces,id'],
             'hotel_category_id' => ['nullable', 'exists:hotel_categories,id'],
+            'logo_url' => ['nullable', 'string', 'max:255'],
             'featured_image' => ['nullable', 'string', 'max:255'],
             'total_rooms' => ['nullable', 'integer', 'min:0'],
             'total_floors' => ['nullable', 'integer', 'min:0'],

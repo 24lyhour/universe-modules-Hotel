@@ -4,8 +4,10 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { Amenity, PaginatedResponse } from '../../../../types';
 import { Button } from '@/components/ui/button';
-import TrashTable from '@/components/shared/TrashTable/TrashTable.vue';
-import { ArrowLeft, RotateCcw } from 'lucide-vue-next';
+import { TableReusable, ButtonGroup } from '@/components/shared';
+import type { TableColumn, TableAction, PaginationData } from '@/components/shared';
+import { ArrowLeft, RotateCcw, Trash2, Sparkles, Database } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     amenities: PaginatedResponse<Amenity>;
@@ -19,60 +21,133 @@ defineOptions({
 const selectedUuids = ref<(string | number)[]>([]);
 const basePath = '/dashboard/hotel-amenities';
 
-const trashItems = computed(() =>
-    props.amenities.data.map((amenity) => ({
-        ...amenity,
-        display_name: amenity.name,
-        type: 'Amenity',
-    })),
-);
+const columns: TableColumn<Amenity>[] = [
+    { key: 'name', label: 'Amenity Name' },
+    { key: 'icon', label: 'Icon' },
+    { key: 'group', label: 'Group' },
+    { key: 'deleted_at', label: 'Deleted At' },
+];
 
-const trashConfig = {
-    entityLabel: 'Amenity',
-    entityLabelPlural: 'Amenities',
-    restoreRoute: (uuid: string) => `${basePath}/${uuid}/restore`,
-    forceDeleteRoute: (uuid: string) => `${basePath}/${uuid}/force-delete`,
-    listRoute: `${basePath}/trash`,
+const actions: TableAction<Amenity>[] = [
+    {
+        label: 'Restore',
+        icon: RotateCcw,
+        onClick: (amenity) => router.put(`${basePath}/${amenity.uuid}/restore`, {}, {
+            preserveScroll: true,
+            onSuccess: () => toast.success(`"${amenity.name}" restored.`),
+        }),
+    },
+    {
+        label: 'Delete Permanently',
+        icon: Trash2,
+        onClick: (amenity) => router.delete(`${basePath}/${amenity.uuid}/force-delete`, {
+            preserveScroll: true,
+            onSuccess: () => toast.success(`"${amenity.name}" permanently deleted.`),
+        }),
+        variant: 'destructive',
+        separator: true,
+    },
+];
+
+const pagination = computed<PaginationData>(() => ({
+    current_page: props.amenities.meta.current_page,
+    last_page: props.amenities.meta.last_page,
+    per_page: props.amenities.meta.per_page,
+    total: props.amenities.meta.total,
+}));
+
+const handlePageChange = (page: number) => {
+    router.get(`${basePath}/trash`, { page }, { preserveState: true });
+};
+
+const handlePerPageChange = (perPage: number) => {
+    router.get(`${basePath}/trash`, { per_page: perPage }, { preserveState: true });
 };
 
 const handleBulkRestore = () => {
     router.put(`${basePath}/bulk-restore`, { uuids: selectedUuids.value }, {
-        onSuccess: () => { selectedUuids.value = []; },
+        onSuccess: () => {
+            toast.success(`${selectedUuids.value.length} amenities restored.`);
+            selectedUuids.value = [];
+        },
     });
+};
+
+const formatDate = (date: string | null) => {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 </script>
 
 <template>
     <Head title="Amenity Trash" />
 
-    <div class="space-y-6">
+    <div class="flex h-full flex-1 flex-col gap-6 p-6">
+        <!-- Header -->
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <Link :href="basePath">
-                    <Button variant="ghost" size="icon"><ArrowLeft class="h-4 w-4" /></Button>
-                </Link>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight">Amenity Trash</h1>
                     <p class="text-muted-foreground">Deleted amenities</p>
                 </div>
             </div>
+            <div class="flex items-center gap-2">
+                <ButtonGroup>
+                    <Button variant="outline" as-child>
+                        <Link :href="basePath">
+                            <Database class="mr-2 h-4 w-4" />
+                            All
+                        </Link>
+                    </Button>
+                    <Button variant="default">
+                        <Trash2 class="mr-2 h-4 w-4" />
+                        Trash
+                    </Button>
+                </ButtonGroup>
+            </div>
         </div>
 
-        <TrashTable
-            v-model:selected="selectedUuids"
-            :items="trashItems"
-            :config="trashConfig"
-            :pagination="amenities.meta"
+        <!-- Table -->
+        <TableReusable
+            :data="amenities.data"
+            :columns="columns"
+            :actions="actions"
+            :pagination="pagination"
+            :searchable="false"
             :selectable="true"
             select-key="uuid"
-            :show-type="false"
+            v-model:selected="selectedUuids"
+            @page-change="handlePageChange"
+            @per-page-change="handlePerPageChange"
         >
             <template #bulk-actions>
-                <Button v-if="selectedUuids.length" variant="outline" size="sm" @click="handleBulkRestore">
+                <Button v-if="selectedUuids.length > 0" variant="outline" size="sm" @click="handleBulkRestore">
                     <RotateCcw class="mr-2 h-4 w-4" />
-                    Restore Selected ({{ selectedUuids.length }})
+                    Restore {{ selectedUuids.length }} Selected
                 </Button>
             </template>
-        </TrashTable>
+
+            <template #cell-name="{ item }">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                        <Sparkles class="h-4 w-4 text-primary" />
+                    </div>
+                    <span class="font-medium">{{ item.name }}</span>
+                </div>
+            </template>
+
+            <template #cell-icon="{ item }">
+                <code v-if="item.icon" class="rounded bg-muted px-2 py-1 text-xs font-mono">{{ item.icon }}</code>
+                <span v-else class="text-muted-foreground">-</span>
+            </template>
+
+            <template #cell-group="{ item }">
+                <span class="text-muted-foreground">{{ item.group || '-' }}</span>
+            </template>
+
+            <template #cell-deleted_at="{ item }">
+                <span class="text-sm text-muted-foreground">{{ formatDate(item.deleted_at) }}</span>
+            </template>
+        </TableReusable>
     </div>
 </template>

@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { ImageUpload } from '@/components/shared';
 import type { HotelFormData, HotelCategory, Province, StatusOption } from '../../../types';
 import { computed } from 'vue';
 
@@ -36,6 +37,20 @@ const provinceIdString = computed({
     get: () => model.value.province_id?.toString() ?? '',
     set: (val: string) => {
         model.value.province_id = val ? Number(val) : null;
+    },
+});
+
+const logoImages = computed({
+    get: () => model.value.logo_url ? [model.value.logo_url] : [],
+    set: (val: string[]) => {
+        model.value.logo_url = val.length > 0 ? val[0] : '';
+    },
+});
+
+const featuredImages = computed({
+    get: () => model.value.featured_image ? [model.value.featured_image] : [],
+    set: (val: string[]) => {
+        model.value.featured_image = val.length > 0 ? val[0] : '';
     },
 });
 </script>
@@ -89,6 +104,31 @@ const provinceIdString = computed({
                 <div class="space-y-2 sm:col-span-2">
                     <Label for="description">Description</Label>
                     <Textarea id="description" v-model="model.description" placeholder="Hotel description" rows="3" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Images -->
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Images</h3>
+                <p class="text-sm text-muted-foreground">Hotel logo, featured image, and gallery</p>
+            </div>
+            <Separator />
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-2">
+                    <ImageUpload v-model="logoImages" label="Logo" :multiple="false" :max-files="1" />
+                    <p v-if="model.errors.logo_url" class="text-sm text-destructive">{{ model.errors.logo_url }}</p>
+                </div>
+
+                <div class="space-y-2">
+                    <ImageUpload v-model="featuredImages" label="Featured Image" :multiple="false" :max-files="1" />
+                    <p v-if="model.errors.featured_image" class="text-sm text-destructive">{{ model.errors.featured_image }}</p>
+                </div>
+
+                <div class="space-y-2 sm:col-span-2">
+                    <ImageUpload v-model="model.gallery" label="Gallery" :multiple="true" :max-files="10" />
+                    <p v-if="model.errors.gallery" class="text-sm text-destructive">{{ model.errors.gallery }}</p>
                 </div>
             </div>
         </div>
@@ -178,7 +218,7 @@ const provinceIdString = computed({
             <div class="grid gap-4 sm:grid-cols-4">
                 <div class="space-y-2">
                     <Label for="star_rating">Star Rating <span class="text-destructive">*</span></Label>
-                    <Select :model-value="model.star_rating?.toString()" @update:model-value="(v: any) => (model.star_rating = Number(v))">
+                    <Select :model-value="model.star_rating?.toString()" @update:model-value="(v: string) => (model.star_rating = Number(v))">
                         <SelectTrigger>
                             <SelectValue placeholder="Stars" />
                         </SelectTrigger>

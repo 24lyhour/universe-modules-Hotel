@@ -42,6 +42,7 @@ const form = useForm<HotelFormData>({
     discount_price: null,
     currency: 'USD',
     hotel_category_id: null,
+    logo_url: '',
     featured_image: '',
     total_rooms: 0,
     total_floors: 0,

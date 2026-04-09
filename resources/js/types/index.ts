@@ -19,6 +19,7 @@ export interface Hotel {
     discount_percentage: number | null;
     is_on_sale: boolean;
     currency: string;
+    logo_url: string | null;
     featured_image: string | null;
     total_rooms: number;
     total_floors: number;
@@ -55,6 +56,7 @@ export interface HotelFormData {
     discount_price: number | null;
     currency: string;
     hotel_category_id: number | null;
+    logo_url: string;
     featured_image: string;
     total_rooms: number;
     total_floors: number;
