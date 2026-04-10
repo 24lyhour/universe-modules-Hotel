@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, computed, watch, type VNode } from 'vue';
+import { h, computed, ref, watch, type VNode } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { useModal } from 'momentum-modal';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, Percent, Hotel as HotelIcon } from 'lucide-vue-next';
-import type { Hotel } from '../../../../types';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { DollarSign, Percent, Hotel as HotelIcon, BedDouble, CheckCheck } from 'lucide-vue-next';
+import type { Hotel, Room } from '../../../../types';
 
 defineOptions({
     layout: (h_: typeof h, page: VNode) =>
@@ -21,13 +23,55 @@ const props = defineProps<{ hotel: Hotel }>();
 const { show, close, redirect } = useModal();
 const isOpen = computed({ get: () => show.value, set: (val: boolean) => { if (!val) { close(); redirect(); } } });
 
+// Normalize rooms — may come as array or { data: [] } from resource collection
+const hotelRooms = computed<Room[]>(() => {
+    const r = props.hotel.rooms;
+    if (Array.isArray(r)) return r;
+    if (r && typeof r === 'object' && 'data' in r) return (r as any).data;
+    return [];
+});
+
+// Track which rooms are selected for discount
+const selectedRoomUuids = ref<Set<string>>(new Set(
+    hotelRooms.value.filter((r: Room) => r.discount_price !== null).map((r: Room) => r.uuid)
+));
+
 const form = useForm({
     discount_price: props.hotel.discount_price,
     discount_percentage: props.hotel.discount_percentage,
+    room_discounts: [] as { uuid: string; discount_price: number | null }[],
 });
 
 const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: props.hotel.currency || 'USD' }).format(value);
+
+const rooms = hotelRooms;
+
+const toggleRoom = (uuid: string) => {
+    if (selectedRoomUuids.value.has(uuid)) {
+        selectedRoomUuids.value.delete(uuid);
+    } else {
+        selectedRoomUuids.value.add(uuid);
+    }
+    // Trigger reactivity
+    selectedRoomUuids.value = new Set(selectedRoomUuids.value);
+};
+
+const selectAllRooms = () => {
+    rooms.value.forEach((r: Room) => selectedRoomUuids.value.add(r.uuid));
+    selectedRoomUuids.value = new Set(selectedRoomUuids.value);
+};
+
+const deselectAllRooms = () => {
+    selectedRoomUuids.value = new Set();
+};
+
+const allSelected = computed(() => rooms.value.length > 0 && rooms.value.every((r: Room) => selectedRoomUuids.value.has(r.uuid)));
+
+const getRoomDiscountPrice = (room: Room): number | null => {
+    if (!form.discount_percentage || !room.price) return null;
+    return Math.round(room.price * (1 - form.discount_percentage / 100) * 100) / 100;
+};
 
 // Auto-calculate percentage when discount_price changes
 watch(() => form.discount_price, (newDiscount) => {
@@ -48,6 +92,14 @@ watch(() => form.discount_percentage, (newPercentage) => {
 });
 
 const handleSubmit = () => {
+    // Build room discounts for selected rooms
+    form.room_discounts = rooms.value.map((room: Room) => ({
+        uuid: room.uuid,
+        discount_price: selectedRoomUuids.value.has(room.uuid)
+            ? getRoomDiscountPrice(room)
+            : null,
+    }));
+
     form.patch(`/dashboard/hotels/${props.hotel.uuid}/discount`, {
         onSuccess: () => { close(); redirect(); },
     });
@@ -56,6 +108,12 @@ const handleSubmit = () => {
 const handleClearDiscount = () => {
     form.discount_price = null;
     form.discount_percentage = null;
+    form.room_discounts = rooms.value.map((room: Room) => ({
+        uuid: room.uuid,
+        discount_price: null,
+    }));
+    selectedRoomUuids.value = new Set();
+
     form.patch(`/dashboard/hotels/${props.hotel.uuid}/discount`, {
         onSuccess: () => { close(); redirect(); },
     });
@@ -151,17 +209,79 @@ const handleClearDiscount = () => {
                         <Badge v-if="form.discount_percentage" variant="destructive">-{{ form.discount_percentage }}%</Badge>
                     </div>
                 </div>
-
-                <!-- Clear discount -->
-                <button
-                    v-if="hotel.discount_price"
-                    type="button"
-                    class="text-sm text-destructive hover:underline"
-                    @click="handleClearDiscount"
-                >
-                    Remove discount
-                </button>
             </div>
+
+            <!-- Room Selection -->
+            <div v-if="rooms.length && form.discount_percentage" class="space-y-4">
+                <Separator />
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium">Apply to Rooms</h3>
+                        <p class="text-sm text-muted-foreground">
+                            Select which rooms get the {{ form.discount_percentage }}% discount
+                        </p>
+                    </div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        @click="allSelected ? deselectAllRooms() : selectAllRooms()"
+                    >
+                        <CheckCheck class="mr-1.5 h-3.5 w-3.5" />
+                        {{ allSelected ? 'Deselect All' : 'Select All' }}
+                    </Button>
+                </div>
+
+                <div class="space-y-2 max-h-[280px] overflow-y-auto rounded-lg border p-2">
+                    <label
+                        v-for="room in rooms"
+                        :key="room.uuid"
+                        class="flex items-center gap-3 rounded-lg p-3 cursor-pointer transition-colors"
+                        :class="selectedRoomUuids.has(room.uuid) ? 'bg-primary/5 border border-primary/20' : 'hover:bg-muted/50 border border-transparent'"
+                    >
+                        <Checkbox
+                            :model-value="selectedRoomUuids.has(room.uuid)"
+                            @update:model-value="toggleRoom(room.uuid)"
+                        />
+                        <div class="flex h-9 w-9 items-center justify-center rounded-md bg-muted shrink-0">
+                            <BedDouble class="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium truncate">{{ room.name }}</p>
+                            <p class="text-xs text-muted-foreground">
+                                {{ room.room_type || 'Standard' }}
+                                <span v-if="room.capacity"> &middot; {{ room.capacity }} guests</span>
+                            </p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div v-if="selectedRoomUuids.has(room.uuid) && getRoomDiscountPrice(room)">
+                                <span class="text-sm font-medium text-green-600">{{ formatCurrency(getRoomDiscountPrice(room)!) }}</span>
+                                <span class="ml-1 text-xs text-muted-foreground line-through">{{ formatCurrency(room.price) }}</span>
+                            </div>
+                            <div v-else>
+                                <span class="text-sm font-medium">{{ formatCurrency(room.price) }}</span>
+                            </div>
+                            <Badge v-if="room.discount_price && !selectedRoomUuids.has(room.uuid)" variant="outline" class="text-[10px] mt-0.5">
+                                has own discount
+                            </Badge>
+                        </div>
+                    </label>
+                </div>
+
+                <p class="text-xs text-muted-foreground">
+                    {{ selectedRoomUuids.size }} of {{ rooms.length }} rooms selected
+                </p>
+            </div>
+
+            <!-- Clear discount -->
+            <button
+                v-if="hotel.discount_price"
+                type="button"
+                class="text-sm text-destructive hover:underline"
+                @click="handleClearDiscount"
+            >
+                Remove all discounts
+            </button>
         </div>
     </ModalForm>
 </template>

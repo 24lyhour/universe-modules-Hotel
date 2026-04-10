@@ -77,6 +77,8 @@ class HotelController extends Controller
 
     public function discount(Hotel $hotel): Modal
     {
+        $hotel->load('rooms');
+
         return Inertia::modal('hotel::Dashboard/V1/Hotel/Discount', [
             'hotel' => (new HotelResource($hotel))->resolve(),
         ])->baseRoute('hotel.hotels.index');
@@ -87,20 +89,23 @@ class HotelController extends Controller
         $validated = $request->validate([
             'discount_price' => ['nullable', 'numeric', 'min:0'],
             'discount_percentage' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'room_discounts' => ['nullable', 'array'],
+            'room_discounts.*.uuid' => ['required', 'string'],
+            'room_discounts.*.discount_price' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $hotel->update($validated);
+        $hotel->update([
+            'discount_price' => $validated['discount_price'] ?? null,
+            'discount_percentage' => $validated['discount_percentage'] ?? null,
+        ]);
 
-        // Apply hotel discount percentage to all rooms
-        if (!empty($validated['discount_percentage'])) {
-            $hotel->rooms()->each(function ($room) use ($validated) {
-                $room->update([
-                    'discount_price' => round($room->price * (1 - $validated['discount_percentage'] / 100), 2),
+        // Apply discount to selected rooms
+        if (!empty($validated['room_discounts'])) {
+            foreach ($validated['room_discounts'] as $roomDiscount) {
+                $hotel->rooms()->where('uuid', $roomDiscount['uuid'])->update([
+                    'discount_price' => $roomDiscount['discount_price'],
                 ]);
-            });
-        } else {
-            // Clear room discounts when hotel discount is removed
-            $hotel->rooms()->update(['discount_price' => null]);
+            }
         }
 
         return redirect()

@@ -78,6 +78,7 @@ export interface Room {
     description: string | null;
     price: number;
     discount_price: number | null;
+    effective_discount_price: number | null;
     capacity: number;
     bed_type: string | null;
     bed_count: number;

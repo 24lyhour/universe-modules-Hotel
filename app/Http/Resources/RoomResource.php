@@ -7,6 +7,22 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class RoomResource extends JsonResource
 {
+    private function getEffectiveDiscountPrice(): ?float
+    {
+        // Room's own discount takes priority
+        if ($this->discount_price) {
+            return (float) $this->discount_price;
+        }
+
+        // Fallback to hotel's discount percentage
+        $hotel = $this->relationLoaded('hotel') ? $this->hotel : $this->resource->hotel;
+        if ($hotel && $hotel->discount_percentage && $this->price) {
+            return round((float) $this->price * (1 - $hotel->discount_percentage / 100), 2);
+        }
+
+        return null;
+    }
+
     public function toArray(Request $request): array
     {
         return [
@@ -19,6 +35,7 @@ class RoomResource extends JsonResource
             'description' => $this->description,
             'price' => (float) $this->price,
             'discount_price' => $this->discount_price ? (float) $this->discount_price : null,
+            'effective_discount_price' => $this->getEffectiveDiscountPrice(),
             'capacity' => $this->capacity,
             'bed_type' => $this->bed_type,
             'bed_count' => $this->bed_count,
