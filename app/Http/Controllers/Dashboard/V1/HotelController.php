@@ -29,9 +29,10 @@ class HotelController extends Controller
 {
     public function index(Request $request, GetHotelIndexDataAction $action): Response
     {
+        $perPage = $request->input('per_page', 10);
         $filters = $request->only(['search', 'status', 'province', 'city', 'category', 'star_rating', 'is_featured', 'min_price', 'max_price']);
 
-        return Inertia::render('hotel::Dashboard/V1/Hotel/Index', $action->execute(15, $filters));
+        return Inertia::render('hotel::Dashboard/V1/Hotel/Index', $action->execute($perPage, $filters));
     }
 
     public function create(GetHotelCreateDataAction $action): Modal
@@ -139,9 +140,10 @@ class HotelController extends Controller
 
     // Trash
 
-    public function trash(): Response
+    public function trash(Request $request): Response
     {
-        $hotels = Hotel::onlyTrashed()->with(['category', 'user'])->latest('deleted_at')->paginate(15);
+        $perPage = $request->input('per_page', 10);
+        $hotels = Hotel::onlyTrashed()->with(['category', 'user'])->latest('deleted_at')->paginate($perPage);
 
         return Inertia::render('hotel::Dashboard/V1/Hotel/Trash', [
             'hotels' => HotelResource::collection($hotels)->response()->getData(true),

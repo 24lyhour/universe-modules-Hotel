@@ -4,6 +4,7 @@ namespace Modules\Hotel\Http\Controllers\Dashboard\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Momentum\Modal\Modal;
@@ -21,9 +22,10 @@ class RoomController extends Controller
         protected RoomService $roomService
     ) {}
 
-    public function allRooms(): Response
+    public function allRooms(Request $request): Response
     {
-        $filters = request()->only(['search', 'status', 'hotel', 'is_available']);
+        $perPage = $request->input('per_page', 10);
+        $filters = $request->only(['search', 'status', 'hotel', 'is_available']);
         $query = Room::query()->with('hotel');
 
         if (!empty($filters['search'])) {
@@ -47,7 +49,6 @@ class RoomController extends Controller
             $query->where('is_available', $filters['is_available']);
         }
 
-        $perPage = request()->input('per_page', 15);
         $rooms = $query->latest()->paginate($perPage);
         $hotels = Hotel::orderBy('name')->get(['id', 'uuid', 'name']);
 
@@ -67,10 +68,11 @@ class RoomController extends Controller
         ]);
     }
 
-    public function index(Hotel $hotel): Response
+    public function index(Request $request, Hotel $hotel): Response
     {
-        $filters = request()->only(['search', 'status', 'room_type', 'is_available', 'min_price', 'max_price']);
-        $rooms = $this->roomService->paginate($hotel, 15, $filters);
+        $perPage = $request->input('per_page', 10);
+        $filters = $request->only(['search', 'status', 'room_type', 'is_available', 'min_price', 'max_price']);
+        $rooms = $this->roomService->paginate($hotel, $perPage, $filters);
 
         return Inertia::render('hotel::Dashboard/V1/Room/Index', [
             'hotel' => $hotel->only(['id', 'uuid', 'name']),
@@ -200,9 +202,10 @@ class RoomController extends Controller
             ->with('success', 'Room created successfully.');
     }
 
-    public function allTrashed(): Response
+    public function allTrashed(Request $request): Response
     {
-        $rooms = Room::onlyTrashed()->with('hotel')->latest('deleted_at')->paginate(15);
+        $perPage = $request->input('per_page', 10);
+        $rooms = Room::onlyTrashed()->with('hotel')->latest('deleted_at')->paginate($perPage);
 
         return Inertia::render('hotel::Dashboard/V1/Room/Trash', [
             'hotel' => null,
