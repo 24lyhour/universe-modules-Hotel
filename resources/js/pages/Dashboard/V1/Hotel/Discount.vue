@@ -32,9 +32,19 @@ const hotelRooms = computed<Room[]>(() => {
 });
 
 // Track which rooms are selected for discount
-const selectedRoomUuids = ref<Set<string>>(new Set(
-    hotelRooms.value.filter((r: Room) => r.discount_price !== null).map((r: Room) => r.uuid)
-));
+const selectedRoomUuids = ref<Set<string>>(new Set());
+
+// Initialize selected rooms from current data
+watch(hotelRooms, (newRooms) => {
+    if (newRooms.length > 0 && selectedRoomUuids.value.size === 0) {
+        newRooms.forEach((r: Room) => {
+            if (r.discount_price !== null) {
+                selectedRoomUuids.value.add(r.uuid);
+            }
+        });
+        selectedRoomUuids.value = new Set(selectedRoomUuids.value);
+    }
+}, { immediate: true });
 
 const form = useForm({
     discount_price: props.hotel.discount_price,
@@ -233,15 +243,17 @@ const handleClearDiscount = () => {
                 </div>
 
                 <div class="space-y-2 max-h-[280px] overflow-y-auto rounded-lg border p-2">
-                    <label
+                    <div
                         v-for="room in rooms"
                         :key="room.uuid"
                         class="flex items-center gap-3 rounded-lg p-3 cursor-pointer transition-colors"
                         :class="selectedRoomUuids.has(room.uuid) ? 'bg-primary/5 border border-primary/20' : 'hover:bg-muted/50 border border-transparent'"
+                        @click="toggleRoom(room.uuid)"
                     >
                         <Checkbox
-                            :model-value="selectedRoomUuids.has(room.uuid)"
-                            @update:model-value="toggleRoom(room.uuid)"
+                            :checked="selectedRoomUuids.has(room.uuid)"
+                            @click.stop
+                            @update:checked="toggleRoom(room.uuid)"
                         />
                         <div class="flex h-9 w-9 items-center justify-center rounded-md bg-muted shrink-0">
                             <BedDouble class="h-4 w-4 text-muted-foreground" />
@@ -265,7 +277,7 @@ const handleClearDiscount = () => {
                                 has own discount
                             </Badge>
                         </div>
-                    </label>
+                    </div>
                 </div>
 
                 <p class="text-xs text-muted-foreground">

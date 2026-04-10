@@ -9,15 +9,9 @@ class RoomResource extends JsonResource
 {
     private function getEffectiveDiscountPrice(): ?float
     {
-        // Room's own discount takes priority
+        // Only use the room's own discount price
         if ($this->discount_price) {
             return (float) $this->discount_price;
-        }
-
-        // Fallback to hotel's discount percentage
-        $hotel = $this->relationLoaded('hotel') ? $this->hotel : $this->resource->hotel;
-        if ($hotel && $hotel->discount_percentage && $this->price) {
-            return round((float) $this->price * (1 - $hotel->discount_percentage / 100), 2);
         }
 
         return null;
