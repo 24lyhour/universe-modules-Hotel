@@ -32,17 +32,20 @@ const hotelRooms = computed<Room[]>(() => {
 });
 
 // Track which rooms are selected for discount
-const selectedRoomUuids = ref<Set<string>>(new Set());
+const selectedRoomUuids = ref<string[]>([]);
+
+const isSelected = (uuid: string) => selectedRoomUuids.value.includes(uuid);
 
 // Initialize selected rooms from current data
 watch(hotelRooms, (newRooms) => {
-    if (newRooms.length > 0 && selectedRoomUuids.value.size === 0) {
+    if (newRooms.length > 0 && selectedRoomUuids.value.length === 0) {
+        const initialUuids: string[] = [];
         newRooms.forEach((r: Room) => {
             if (r.discount_price !== null) {
-                selectedRoomUuids.value.add(r.uuid);
+                initialUuids.push(r.uuid);
             }
         });
-        selectedRoomUuids.value = new Set(selectedRoomUuids.value);
+        selectedRoomUuids.value = initialUuids;
     }
 }, { immediate: true });
 
@@ -58,25 +61,23 @@ const formatCurrency = (value: number) =>
 const rooms = hotelRooms;
 
 const toggleRoom = (uuid: string) => {
-    if (selectedRoomUuids.value.has(uuid)) {
-        selectedRoomUuids.value.delete(uuid);
+    const index = selectedRoomUuids.value.indexOf(uuid);
+    if (index > -1) {
+        selectedRoomUuids.value.splice(index, 1);
     } else {
-        selectedRoomUuids.value.add(uuid);
+        selectedRoomUuids.value.push(uuid);
     }
-    // Trigger reactivity
-    selectedRoomUuids.value = new Set(selectedRoomUuids.value);
 };
 
 const selectAllRooms = () => {
-    rooms.value.forEach((r: Room) => selectedRoomUuids.value.add(r.uuid));
-    selectedRoomUuids.value = new Set(selectedRoomUuids.value);
+    selectedRoomUuids.value = rooms.value.map((r: Room) => r.uuid);
 };
 
 const deselectAllRooms = () => {
-    selectedRoomUuids.value = new Set();
+    selectedRoomUuids.value = [];
 };
 
-const allSelected = computed(() => rooms.value.length > 0 && rooms.value.every((r: Room) => selectedRoomUuids.value.has(r.uuid)));
+const allSelected = computed(() => rooms.value.length > 0 && rooms.value.every((r: Room) => isSelected(r.uuid)));
 
 const getRoomDiscountPrice = (room: Room): number | null => {
     if (!form.discount_percentage || !room.price) return null;
@@ -105,7 +106,7 @@ const handleSubmit = () => {
     // Build room discounts for selected rooms
     form.room_discounts = rooms.value.map((room: Room) => ({
         uuid: room.uuid,
-        discount_price: selectedRoomUuids.value.has(room.uuid)
+        discount_price: isSelected(room.uuid)
             ? getRoomDiscountPrice(room)
             : null,
     }));
@@ -122,7 +123,7 @@ const handleClearDiscount = () => {
         uuid: room.uuid,
         discount_price: null,
     }));
-    selectedRoomUuids.value = new Set();
+    selectedRoomUuids.value = [];
 
     form.patch(`/dashboard/hotels/${props.hotel.uuid}/discount`, {
         onSuccess: () => { close(); redirect(); },
@@ -247,14 +248,9 @@ const handleClearDiscount = () => {
                         v-for="room in rooms"
                         :key="room.uuid"
                         class="flex items-center gap-3 rounded-lg p-3 cursor-pointer transition-colors"
-                        :class="selectedRoomUuids.has(room.uuid) ? 'bg-primary/5 border border-primary/20' : 'hover:bg-muted/50 border border-transparent'"
+                        :class="isSelected(room.uuid) ? 'bg-primary/5 border border-primary/20' : 'hover:bg-muted/50 border border-transparent'"
                         @click="toggleRoom(room.uuid)"
                     >
-                        <Checkbox
-                            :checked="selectedRoomUuids.has(room.uuid)"
-                            @click.stop
-                            @update:checked="toggleRoom(room.uuid)"
-                        />
                         <div class="flex h-9 w-9 items-center justify-center rounded-md bg-muted shrink-0">
                             <BedDouble class="h-4 w-4 text-muted-foreground" />
                         </div>
@@ -266,14 +262,14 @@ const handleClearDiscount = () => {
                             </p>
                         </div>
                         <div class="text-right shrink-0">
-                            <div v-if="selectedRoomUuids.has(room.uuid) && getRoomDiscountPrice(room)">
+                            <div v-if="isSelected(room.uuid) && getRoomDiscountPrice(room)">
                                 <span class="text-sm font-medium text-green-600">{{ formatCurrency(getRoomDiscountPrice(room)!) }}</span>
                                 <span class="ml-1 text-xs text-muted-foreground line-through">{{ formatCurrency(room.price) }}</span>
                             </div>
                             <div v-else>
                                 <span class="text-sm font-medium">{{ formatCurrency(room.price) }}</span>
                             </div>
-                            <Badge v-if="room.discount_price && !selectedRoomUuids.has(room.uuid)" variant="outline" class="text-[10px] mt-0.5">
+                            <Badge v-if="room.discount_price && !isSelected(room.uuid)" variant="outline" class="text-[10px] mt-0.5">
                                 has own discount
                             </Badge>
                         </div>
@@ -281,7 +277,7 @@ const handleClearDiscount = () => {
                 </div>
 
                 <p class="text-xs text-muted-foreground">
-                    {{ selectedRoomUuids.size }} of {{ rooms.length }} rooms selected
+                    {{ selectedRoomUuids.length }} of {{ rooms.length }} rooms selected
                 </p>
             </div>
 
