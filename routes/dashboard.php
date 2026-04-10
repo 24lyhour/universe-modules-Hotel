@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\AmenityController;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\HotelCategoryController;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\HotelController;
+use Modules\Hotel\Http\Controllers\Dashboard\V1\HotelReviewController;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\ProvinceController;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\RoomController;
 
@@ -48,6 +49,19 @@ Route::middleware(['auth', 'verified', 'auto.permission'])
         Route::resource('hotel-provinces', ProvinceController::class)
             ->parameters(['hotel-provinces' => 'province'])
             ->names('hotel.provinces');
+
+        // ---------------------------------------------------------------
+        // Hotel Reviews
+        // ---------------------------------------------------------------
+        Route::get('hotel-reviews', [HotelReviewController::class, 'index'])->name('hotel.reviews.index');
+        Route::get('hotel-reviews/trash', [HotelReviewController::class, 'trash'])->name('hotel.reviews.trash');
+        Route::get('hotel-reviews/{review}', [HotelReviewController::class, 'show'])->name('hotel.reviews.show');
+        Route::get('hotel-reviews/{review}/delete', [HotelReviewController::class, 'confirmDelete'])->name('hotel.reviews.confirm-delete');
+        Route::patch('hotel-reviews/{review}/status', [HotelReviewController::class, 'updateStatus'])->name('hotel.reviews.update-status');
+        Route::patch('hotel-reviews/{review}/reply', [HotelReviewController::class, 'reply'])->name('hotel.reviews.reply');
+        Route::delete('hotel-reviews/{review}', [HotelReviewController::class, 'destroy'])->name('hotel.reviews.destroy');
+        Route::put('hotel-reviews/{uuid}/restore', [HotelReviewController::class, 'restore'])->name('hotel.reviews.restore');
+        Route::delete('hotel-reviews/{uuid}/force-delete', [HotelReviewController::class, 'forceDelete'])->name('hotel.reviews.force-delete');
 
         // ---------------------------------------------------------------
         // Hotels

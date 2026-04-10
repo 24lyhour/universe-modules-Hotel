@@ -50,7 +50,8 @@ class HotelServiceProvider extends ServiceProvider
             \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Categories'), '/dashboard/hotel-categories', 15, null, 'hotel.categories.*', 'LayoutGrid');
             \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Amenities'), '/dashboard/hotel-amenities', 20, null, 'hotel.amenities.*', 'Sparkles');
             \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Rooms'), '/dashboard/hotel-rooms', 25, null, 'hotel.rooms.*', 'BedDouble');
-            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Provinces'), '/dashboard/hotel-provinces', 30, null, 'hotel.provinces.*', 'MapPin');
+            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Reviews'), '/dashboard/hotel-reviews', 30, null, 'hotel.reviews.*', 'Star');
+            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Provinces'), '/dashboard/hotel-provinces', 35, null, 'hotel.provinces.*', 'MapPin');
         });
     }
 

@@ -121,6 +121,11 @@ class Hotel extends Model
         return $this->hasMany(Room::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(HotelReview::class);
+    }
+
     public function hotelAmenities(): BelongsToMany
     {
         return $this->belongsToMany(Amenity::class, 'hotel_amenity_hotel', 'hotel_id', 'amenity_id')

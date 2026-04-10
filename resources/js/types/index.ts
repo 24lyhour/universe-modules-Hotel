@@ -30,8 +30,8 @@ export interface Hotel {
     is_featured: boolean;
     category: HotelCategory | null;
     province: Province | null;
-    user: { id: number; name: string } | null;
-    created_by: { id: number; name: string } | null;
+    user: { id: number; name: string; avatar: string | null } | null;
+    created_by: { id: number; name: string; avatar: string | null } | null;
     rooms: Room[];
     rooms_count: number;
     created_at: string;
@@ -202,10 +202,45 @@ export interface PaginatedResponse<T> {
     links: Record<string, string | null>;
 }
 
+export interface HotelReview {
+    id: number;
+    uuid: string;
+    hotel: { id: number; uuid: string; name: string } | null;
+    user: { id: number; name: string; avatar: string | null } | null;
+    guest_name: string | null;
+    guest_email: string | null;
+    rating: number;
+    comment: string | null;
+    reply: string | null;
+    replied_at: string | null;
+    images: string[];
+    is_recommend: boolean;
+    is_verified: boolean;
+    status: string;
+    helpful_count: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+}
+
+export interface HotelReviewStats {
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+    average_rating: number;
+    '5_star': number;
+    '4_star': number;
+    '3_star': number;
+    '2_star': number;
+    '1_star': number;
+}
+
 export interface HotelStats {
     total: number;
     active: number;
     inactive: number;
     featured: number;
     trashed: number;
+
 }

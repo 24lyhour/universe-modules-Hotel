@@ -6,6 +6,7 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -77,6 +78,11 @@ class Room extends Model
         return $this->belongsTo(Hotel::class);
     }
 
+    public function roomPolicies(): HasMany
+    {
+        return $this->hasMany(RoomPolicies::class);
+    }
+
     // Scopes
 
     public function scopeAvailable($query)
@@ -88,4 +94,5 @@ class Room extends Model
     {
         return $query->where('status', 'active');
     }
+
 }
