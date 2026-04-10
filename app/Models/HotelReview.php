@@ -9,8 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Modules\Hotel\Enums\HotelReviewEnum;
-
 class HotelReview extends Model
 {
     use HasFactory, HasUuid, SoftDeletes;
@@ -20,7 +18,7 @@ class HotelReview extends Model
     protected $fillable = [
         'uuid',
         'hotel_id',
-        'user_id',
+        'customer_id',
         'guest_name',
         'guest_email',
         'rating',
@@ -30,7 +28,7 @@ class HotelReview extends Model
         'images',
         'is_recommend',
         'is_verified',
-        'status',
+        'is_active',
         'helpful_count',
     ];
 
@@ -40,10 +38,10 @@ class HotelReview extends Model
             'images' => 'array',
             'is_recommend' => 'boolean',
             'is_verified' => 'boolean',
+            'is_active' => 'boolean',
             'rating' => 'integer',
             'helpful_count' => 'integer',
             'replied_at' => 'datetime',
-            'status' => HotelReviewEnum::class,
         ];
     }
 
@@ -70,21 +68,16 @@ class HotelReview extends Model
         return $this->belongsTo(Hotel::class);
     }
 
-    public function user(): BelongsTo
+    public function customer(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(\Modules\Customer\Models\Customer::class);
     }
 
     // Scopes
 
-    public function scopeApproved($query)
+    public function scopeActive($query)
     {
-        return $query->where('status', HotelReviewEnum::Approved);
-    }
-
-    public function scopePending($query)
-    {
-        return $query->where('status', HotelReviewEnum::Pending);
+        return $query->where('is_active', true);
     }
 
     public function scopeByRating($query, int $rating)

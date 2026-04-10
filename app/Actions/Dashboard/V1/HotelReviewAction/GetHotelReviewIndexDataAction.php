@@ -10,7 +10,7 @@ class GetHotelReviewIndexDataAction
 {
     public function execute(int $perPage = 10, array $filters = []): array
     {
-        $query = HotelReview::query()->with(['hotel', 'user']);
+        $query = HotelReview::query()->with(['hotel', 'customer']);
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
@@ -21,8 +21,8 @@ class GetHotelReviewIndexDataAction
             });
         }
 
-        if (!empty($filters['status']) && $filters['status'] !== 'all') {
-            $query->where('status', $filters['status']);
+        if (isset($filters['is_active']) && $filters['is_active'] !== 'all') {
+            $query->where('is_active', $filters['is_active'] === 'true');
         }
 
         if (!empty($filters['rating'])) {
@@ -48,10 +48,10 @@ class GetHotelReviewIndexDataAction
             'filters' => $filters,
             'stats' => [
                 'total' => HotelReview::count(),
-                'pending' => HotelReview::where('status', 'pending')->count(),
-                'approved' => HotelReview::where('status', 'approved')->count(),
-                'rejected' => HotelReview::where('status', 'rejected')->count(),
-                'average_rating' => round(HotelReview::where('status', 'approved')->avg('rating') ?? 0, 1),
+                'active' => HotelReview::where('is_active', true)->count(),
+                'inactive' => HotelReview::where('is_active', false)->count(),
+                'pending_reply' => HotelReview::where('is_active', true)->whereNull('reply')->count(),
+                'average_rating' => round(HotelReview::where('is_active', true)->avg('rating') ?? 0, 1),
                 '5_star' => HotelReview::where('rating', 5)->count(),
                 '4_star' => HotelReview::where('rating', 4)->count(),
                 '3_star' => HotelReview::where('rating', 3)->count(),

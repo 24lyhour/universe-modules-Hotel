@@ -29,18 +29,16 @@ const handleReply = () => {
     });
 };
 
-const handleStatus = (status: string) => {
-    router.patch(`/dashboard/hotel-reviews/${props.review.uuid}/status`, { status }, {
+const handleToggleActive = (isActive: boolean) => {
+    router.patch(`/dashboard/hotel-reviews/${props.review.uuid}/toggle-active`, { is_active: isActive }, {
         preserveScroll: true,
-        onSuccess: () => toast.success(`Review ${status}.`),
+        onSuccess: () => toast.success(`Review ${isActive ? 'activated' : 'deactivated'}.`),
     });
 };
 
 const formatDate = (date: string) => new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-const getStatusVariant = (status: string) => {
-    switch (status) { case 'approved': return 'default'; case 'rejected': return 'destructive'; case 'pending': return 'outline'; default: return 'outline'; }
-};
+
 </script>
 
 <template>
@@ -55,18 +53,15 @@ const getStatusVariant = (status: string) => {
                 </Link>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight">Review Detail</h1>
-                    <p class="text-muted-foreground">by {{ review.guest_name || review.user?.name || 'Anonymous' }}</p>
+                    <p class="text-muted-foreground">by {{ review.guest_name || review.customer?.name || 'Anonymous' }}</p>
                 </div>
             </div>
             <div class="flex gap-2">
-                <Button v-if="review.status !== 'approved'" variant="default" size="sm" @click="handleStatus('approved')">
-                    <CheckCircle class="mr-2 h-4 w-4" />Approve
+                <Button v-if="!review.is_active" variant="default" size="sm" @click="handleToggleActive(true)">
+                    <CheckCircle class="mr-2 h-4 w-4" />Activate
                 </Button>
-                <Button v-if="review.status !== 'rejected'" variant="outline" size="sm" @click="handleStatus('rejected')">
-                    <XCircle class="mr-2 h-4 w-4" />Reject
-                </Button>
-                <Button v-if="review.status !== 'pending'" variant="outline" size="sm" @click="handleStatus('pending')">
-                    <Clock class="mr-2 h-4 w-4" />Set Pending
+                <Button v-if="review.is_active" variant="outline" size="sm" @click="handleToggleActive(false)">
+                    <XCircle class="mr-2 h-4 w-4" />Deactivate
                 </Button>
             </div>
         </div>
@@ -80,7 +75,7 @@ const getStatusVariant = (status: string) => {
                         <div class="flex items-center justify-between">
                             <CardTitle>Review</CardTitle>
                             <div class="flex items-center gap-2">
-                                <Badge :variant="getStatusVariant(review.status)">{{ review.status }}</Badge>
+                                <Badge :variant="review.is_active ? 'default' : 'destructive'">{{ review.is_active ? 'Active' : 'Inactive' }}</Badge>
                                 <Badge v-if="review.is_verified" variant="default">Verified</Badge>
                             </div>
                         </div>
@@ -163,7 +158,7 @@ const getStatusVariant = (status: string) => {
                     <CardContent class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-muted-foreground">Name</span>
-                            <span class="font-medium">{{ review.guest_name || review.user?.name || 'Anonymous' }}</span>
+                            <span class="font-medium">{{ review.guest_name || review.customer?.name || 'Anonymous' }}</span>
                         </div>
                         <div v-if="review.guest_email" class="flex justify-between">
                             <span class="text-muted-foreground">Email</span>

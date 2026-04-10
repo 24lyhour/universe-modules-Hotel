@@ -49,22 +49,22 @@ const stars = computed(() => renderStars(props.stats.average_rating));
             variant="info"
         />
         <StatsCard
-            :title="__('Pending')"
-            :value="stats.pending"
-            :icon="Clock"
-            variant="warning"
-        />
-        <StatsCard
-            :title="__('Approved')"
-            :value="stats.approved"
+            :title="__('Active')"
+            :value="stats.active"
             :icon="CheckCircle"
             variant="success"
         />
         <StatsCard
-            :title="__('Rejected')"
-            :value="stats.rejected"
+            :title="__('Inactive')"
+            :value="stats.inactive"
             :icon="XCircle"
             variant="destructive"
+        />
+        <StatsCard
+            :title="__('Needs Reply')"
+            :value="stats.pending_reply"
+            :icon="Clock"
+            variant="warning"
         />
     </div>
 

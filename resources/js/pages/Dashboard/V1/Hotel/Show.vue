@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { GeofenceMap } from '@/components/shared';
 import {
     Pencil, Trash2, Star, MapPin, Phone, Mail, Globe, BedDouble, Building,
-    ArrowLeft, Hotel as HotelIcon, DollarSign, Layers, CheckCircle, XCircle,
+    ArrowLeft, Hotel as HotelIcon, DollarSign, Layers, CheckCircle, XCircle, ExternalLink,
 } from 'lucide-vue-next';
 
 defineOptions({
@@ -30,6 +30,10 @@ const getStatusVariant = (status: string) => {
 const mapLatitude = computed(() => props.hotel.latitude != null ? Number(props.hotel.latitude) : null);
 const mapLongitude = computed(() => props.hotel.longitude != null ? Number(props.hotel.longitude) : null);
 const hasLocation = computed(() => mapLatitude.value !== null && mapLongitude.value !== null);
+const googleMapsUrl = computed(() => {
+    if (!hasLocation.value) return '';
+    return `https://www.google.com/maps?q=${mapLatitude.value},${mapLongitude.value}`;
+});
 </script>
 
 <template>
@@ -136,7 +140,16 @@ const hasLocation = computed(() => mapLatitude.value !== null && mapLongitude.va
 
                 <!-- Map -->
                 <Card v-if="hasLocation">
-                    <CardHeader><CardTitle>Location</CardTitle></CardHeader>
+                    <CardHeader>
+                        <div class="flex items-center justify-between">
+                            <CardTitle>Location</CardTitle>
+                            <a :href="googleMapsUrl" target="_blank" rel="noopener noreferrer">
+                                <Button variant="outline" size="sm">
+                                    <ExternalLink class="mr-2 h-4 w-4" />View on Map
+                                </Button>
+                            </a>
+                        </div>
+                    </CardHeader>
                     <CardContent>
                         <GeofenceMap
                             :latitude="mapLatitude"

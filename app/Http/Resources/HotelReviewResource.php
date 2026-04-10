@@ -17,9 +17,10 @@ class HotelReviewResource extends JsonResource
                 'uuid' => $this->hotel->uuid,
                 'name' => $this->hotel->name,
             ]),
-            'user' => $this->whenLoaded('user', fn () => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
+            'customer' => $this->whenLoaded('customer', fn () => [
+                'id' => $this->customer->id,
+                'name' => $this->customer->name,
+                'avatar' => $this->customer->avatar,
             ]),
             'guest_name' => $this->guest_name,
             'guest_email' => $this->guest_email,
@@ -30,7 +31,7 @@ class HotelReviewResource extends JsonResource
             'images' => $this->images,
             'is_recommend' => $this->is_recommend,
             'is_verified' => $this->is_verified,
-            'status' => $this->status,
+            'is_active' => $this->is_active,
             'helpful_count' => $this->helpful_count,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

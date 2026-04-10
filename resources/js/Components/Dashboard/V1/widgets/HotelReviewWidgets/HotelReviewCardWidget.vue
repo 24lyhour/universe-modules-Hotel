@@ -18,8 +18,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: 'view', review: HotelReview): void;
-    (e: 'approve', review: HotelReview): void;
-    (e: 'reject', review: HotelReview): void;
+    (e: 'toggleActive', review: HotelReview, isActive: boolean): void;
     (e: 'delete', review: HotelReview): void;
     (e: 'reply', review: HotelReview): void;
 }>();
@@ -45,26 +44,17 @@ const formatDate = (date: string) => {
     });
 };
 
-const getStatusVariant = (status: string) => {
-    switch (status) {
-        case 'approved': return 'default';
-        case 'rejected': return 'destructive';
-        case 'pending': return 'outline';
-        default: return 'outline';
-    }
-};
-
-const displayName = computed(() => props.review.guest_name || props.review.user?.name || __('Anonymous Guest'));
+const displayName = computed(() => props.review.guest_name || props.review.customer?.name || __('Anonymous Guest'));
 </script>
 
 <template>
     <Card class="overflow-hidden hover:shadow-md transition-all duration-200 border-l-4" 
-        :class="review.status === 'approved' ? 'border-l-emerald-500' : (review.status === 'rejected' ? 'border-l-red-500' : 'border-l-yellow-500')">
+        :class="review.is_active ? 'border-l-emerald-500' : 'border-l-red-500'">
         <CardContent class="p-6">
             <div class="flex gap-4">
                 <!-- Avatar -->
                 <Avatar class="h-14 w-14 shrink-0 border-2 border-muted">
-                    <AvatarImage v-if="review.user?.avatar" :src="review.user.avatar" />
+                    <AvatarImage v-if="review.customer?.avatar" :src="review.customer.avatar" />
                     <AvatarFallback class="bg-primary/5 text-primary text-lg font-bold">
                         {{ getInitials(displayName) }}
                     </AvatarFallback>
@@ -82,8 +72,8 @@ const displayName = computed(() => props.review.guest_name || props.review.user?
                                 <Badge v-if="review.is_verified" variant="secondary" class="h-5 text-[10px] px-1.5 py-0">
                                     {{ __('Verified') }}
                                 </Badge>
-                                <Badge :variant="getStatusVariant(review.status)" class="h-5 text-[10px] px-1.5 py-0 capitalize">
-                                    {{ review.status }}
+                                <Badge :variant="review.is_active ? 'default' : 'destructive'" class="h-5 text-[10px] px-1.5 py-0 capitalize">
+                                    {{ review.is_active ? __('Active') : __('Inactive') }}
                                 </Badge>
                             </div>
                             <p v-if="review.guest_email" class="text-xs text-muted-foreground">{{ review.guest_email }}</p>
@@ -159,10 +149,10 @@ const displayName = computed(() => props.review.guest_name || props.review.user?
                         </Button>
 
                         <div class="flex items-center gap-1 ml-auto">
-                            <Button v-if="review.status !== 'approved'" variant="ghost" size="icon" class="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" @click="emit('approve', review)">
+                            <Button v-if="!review.is_active" variant="ghost" size="icon" class="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" @click="emit('toggleActive', review, true)">
                                 <CheckCircle class="h-4 w-4" />
                             </Button>
-                            <Button v-if="review.status !== 'rejected'" variant="ghost" size="icon" class="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" @click="emit('reject', review)">
+                            <Button v-if="review.is_active" variant="ghost" size="icon" class="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" @click="emit('toggleActive', review, false)">
                                 <XCircle class="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" size="icon" class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5" @click="emit('delete', review)">

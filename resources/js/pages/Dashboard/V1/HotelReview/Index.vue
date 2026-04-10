@@ -24,14 +24,14 @@ const props = defineProps<{
 }>();
 
 const search = ref(props.filters.search || '');
-const statusFilter = ref(props.filters.status || 'all');
+const isActiveFilter = ref(props.filters.is_active || 'all');
 const ratingFilter = ref(props.filters.rating || 'all');
 const hotelFilter = ref(props.filters.hotel || 'all');
 const perPage = ref(props.reviews.meta.per_page || 10);
 
 const hasActiveFilters = computed(() => !!(
     search.value ||
-    (statusFilter.value && statusFilter.value !== 'all') ||
+    (isActiveFilter.value && isActiveFilter.value !== 'all') ||
     (ratingFilter.value && ratingFilter.value !== 'all') ||
     (hotelFilter.value && hotelFilter.value !== 'all')
 ));
@@ -45,7 +45,7 @@ const pagination = computed(() => ({
 
 const getFilterParams = () => ({
     search: search.value || undefined,
-    status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
+    is_active: isActiveFilter.value !== 'all' ? isActiveFilter.value : undefined,
     rating: ratingFilter.value !== 'all' ? ratingFilter.value : undefined,
     hotel: hotelFilter.value !== 'all' ? hotelFilter.value : undefined,
     per_page: perPage.value,
@@ -57,7 +57,7 @@ const applyFilters = (overrides = {}) => {
 
 const clearFilters = () => {
     search.value = '';
-    statusFilter.value = 'all';
+    isActiveFilter.value = 'all';
     ratingFilter.value = 'all';
     hotelFilter.value = 'all';
     applyFilters({ page: 1 });
@@ -69,10 +69,10 @@ const handlePerPageChange = (val: any) => {
     applyFilters({ page: 1 });
 };
 
-const handleStatusUpdate = (review: HotelReview, status: string) => {
-    router.patch(`/dashboard/hotel-reviews/${review.uuid}/status`, { status }, {
+const handleToggleActive = (review: HotelReview, isActive: boolean) => {
+    router.patch(`/dashboard/hotel-reviews/${review.uuid}/toggle-active`, { is_active: isActive }, {
         preserveScroll: true,
-        onSuccess: () => toast.success(`Review ${status}`),
+        onSuccess: () => toast.success(`Review ${isActive ? 'activated' : 'deactivated'}`),
     });
 };
 
@@ -118,15 +118,14 @@ const handleDelete = (review: HotelReview) => router.visit(`/dashboard/hotel-rev
                 </div>
                 
                 <div class="flex items-center gap-2">
-                    <Select v-model="statusFilter" @update:model-value="applyFilters({ page: 1 })">
+                    <Select v-model="isActiveFilter" @update:model-value="applyFilters({ page: 1 })">
                         <SelectTrigger class="w-[140px] h-10 border-muted-foreground/20">
                             <SelectValue placeholder="Status" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="approved">Approved</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
+                            <SelectItem value="true">Active</SelectItem>
+                            <SelectItem value="false">Inactive</SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -167,8 +166,7 @@ const handleDelete = (review: HotelReview) => router.visit(`/dashboard/hotel-rev
                     :review="review"
                     @view="handleView"
                     @reply="handleReply"
-                    @approve="handleStatusUpdate(review, 'approved')"
-                    @reject="handleStatusUpdate(review, 'rejected')"
+                    @toggleActive="handleToggleActive"
                     @delete="handleDelete"
                 />
             </template>

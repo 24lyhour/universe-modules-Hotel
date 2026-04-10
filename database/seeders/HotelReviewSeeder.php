@@ -4,7 +4,6 @@ namespace Modules\Hotel\Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Modules\Hotel\Enums\HotelReviewEnum;
 use Modules\Hotel\Models\Hotel;
 use Modules\Hotel\Models\HotelReview;
 
@@ -16,19 +15,19 @@ class HotelReviewSeeder extends Seeder
     public function run(): void
     {
         $hotels = Hotel::all();
-        $users = User::all();
+        $customers = \Modules\Customer\Models\Customer::all();
 
         if ($hotels->isEmpty()) {
             return;
         }
 
-        if ($users->isEmpty()) {
-            // Create a default user if none exists
-            $user = User::factory()->create([
+        if ($customers->isEmpty()) {
+            // Create a default customer if none exists
+            $customer = \Modules\Customer\Models\Customer::factory()->create([
                 'name' => 'Demo Guest',
                 'email' => 'guest@example.com',
             ]);
-            $users = collect([$user]);
+            $customers = collect([$customer]);
         }
 
         $comments = [
@@ -57,29 +56,29 @@ class HotelReviewSeeder extends Seeder
             $reviewCount = rand(3, 8);
 
             for ($i = 0; $i < $reviewCount; $i++) {
-                $user = $users->random();
-                $status = $this->getRandomStatus();
+                $customer = $customers->random();
+                $isActive = rand(0, 4) !== 0; // 80% chance of being active
                 $rating = rand(3, 5); // Mostly positive reviews for better demo
 
                 if ($rating < 3) {
-                    $status = HotelReviewEnum::Rejected;
+                    $isActive = false; // poor reviews inactive by default
                 }
 
                 $review = HotelReview::create([
                     'hotel_id' => $hotel->id,
-                    'user_id' => $user->id,
-                    'guest_name' => $user->name,
-                    'guest_email' => $user->email,
+                    'customer_id' => $customer->id,
+                    'guest_name' => $customer->name,
+                    'guest_email' => $customer->email,
                     'rating' => $rating,
                     'comment' => $comments[array_rand($comments)],
                     'is_recommend' => $rating >= 4,
                     'is_verified' => rand(0, 1) === 1,
-                    'status' => $status,
+                    'is_active' => $isActive,
                     'helpful_count' => rand(0, 20),
                 ]);
 
                 // Add a reply to some approved reviews
-                if ($status === HotelReviewEnum::Approved && rand(0, 1) === 1) {
+                if ($isActive && rand(0, 1) === 1) {
                     $review->update([
                         'reply' => $replies[array_rand($replies)],
                         'replied_at' => now()->subDays(rand(0, 5)),
@@ -87,18 +86,5 @@ class HotelReviewSeeder extends Seeder
                 }
             }
         }
-    }
-
-    private function getRandomStatus(): HotelReviewEnum
-    {
-        $statuses = [
-            HotelReviewEnum::Approved,
-            HotelReviewEnum::Approved,
-            HotelReviewEnum::Approved, // Higher weight for approved
-            HotelReviewEnum::Pending,
-            HotelReviewEnum::Rejected,
-        ];
-
-        return $statuses[array_rand($statuses)];
     }
 }

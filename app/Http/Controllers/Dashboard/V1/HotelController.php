@@ -91,6 +91,18 @@ class HotelController extends Controller
 
         $hotel->update($validated);
 
+        // Apply hotel discount percentage to all rooms
+        if (!empty($validated['discount_percentage'])) {
+            $hotel->rooms()->each(function ($room) use ($validated) {
+                $room->update([
+                    'discount_price' => round($room->price * (1 - $validated['discount_percentage'] / 100), 2),
+                ]);
+            });
+        } else {
+            // Clear room discounts when hotel discount is removed
+            $hotel->rooms()->update(['discount_price' => null]);
+        }
+
         return redirect()
             ->route('hotel.hotels.index')
             ->with('success', 'Hotel discount updated.');

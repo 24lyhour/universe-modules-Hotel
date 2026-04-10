@@ -252,9 +252,15 @@ const handlePerPageChange = (perPage: number) => {
                 <span v-else class="text-muted-foreground">-</span>
             </template>
             <template #cell-price="{ item }">
-                <div>
+                <div v-if="item.discount_price && item.discount_price < item.price">
+                    <span class="font-medium text-green-600">{{ formatCurrency(item.discount_price) }}</span>
+                    <span class="ml-1 text-xs text-muted-foreground line-through">{{ formatCurrency(item.price) }}</span>
+                    <Badge variant="destructive" class="ml-1 text-[10px] px-1 py-0">
+                        -{{ Math.round(((item.price - item.discount_price) / item.price) * 100) }}%
+                    </Badge>
+                </div>
+                <div v-else>
                     <span class="font-medium">{{ formatCurrency(item.price) }}</span>
-                    <span v-if="item.discount_price" class="ml-1 text-xs text-muted-foreground line-through">{{ formatCurrency(item.discount_price) }}</span>
                 </div>
             </template>
             <template #cell-room_type="{ item }">

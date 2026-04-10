@@ -11,8 +11,6 @@ use Momentum\Modal\Modal;
 use Modules\Hotel\Actions\Dashboard\V1\HotelReviewAction\DeleteReviewAction;
 use Modules\Hotel\Actions\Dashboard\V1\HotelReviewAction\GetHotelReviewIndexDataAction;
 use Modules\Hotel\Actions\Dashboard\V1\HotelReviewAction\ReplyReviewAction;
-use Modules\Hotel\Actions\Dashboard\V1\HotelReviewAction\UpdateReviewStatusAction;
-use Modules\Hotel\Enums\HotelReviewEnum;
 use Modules\Hotel\Http\Resources\HotelReviewResource;
 use Modules\Hotel\Models\HotelReview;
 
@@ -21,14 +19,14 @@ class HotelReviewController extends Controller
     public function index(Request $request, GetHotelReviewIndexDataAction $action): Response
     {
         $perPage = $request->input('per_page', 10);
-        $filters = $request->only(['search', 'status', 'rating', 'hotel']);
+        $filters = $request->only(['search', 'is_active', 'rating', 'hotel']);
 
         return Inertia::render('hotel::Dashboard/V1/HotelReview/Index', $action->execute($perPage, $filters));
     }
 
     public function show(HotelReview $review): Response
     {
-        $review->load(['hotel', 'user']);
+        $review->load(['hotel', 'customer']);
 
         return Inertia::render('hotel::Dashboard/V1/HotelReview/Show', [
             'review' => (new HotelReviewResource($review))->resolve(),
@@ -46,17 +44,20 @@ class HotelReviewController extends Controller
         return redirect()->back()->with('success', 'Reply sent.');
     }
 
-    public function updateStatus(Request $request, HotelReview $review, UpdateReviewStatusAction $action): RedirectResponse
+    public function toggleActive(Request $request, HotelReview $review): RedirectResponse
     {
-        $status = HotelReviewEnum::from($request->input('status'));
-        $action->execute($review, $status);
+        $validated = $request->validate([
+            'is_active' => ['required', 'boolean'],
+        ]);
+
+        $review->update(['is_active' => $validated['is_active']]);
 
         return redirect()->back()->with('success', 'Review status updated.');
     }
 
     public function confirmDelete(HotelReview $review): Modal
     {
-        $review->load(['hotel', 'user']);
+        $review->load(['hotel', 'customer']);
 
         return Inertia::modal('hotel::Dashboard/V1/HotelReview/Delete', [
             'review' => (new HotelReviewResource($review))->resolve(),
@@ -76,7 +77,7 @@ class HotelReviewController extends Controller
 
     public function trash(): Response
     {
-        $reviews = HotelReview::onlyTrashed()->with(['hotel', 'user'])->latest('deleted_at')->paginate(15);
+        $reviews = HotelReview::onlyTrashed()->with(['hotel', 'customer'])->latest('deleted_at')->paginate(15);
 
         return Inertia::render('hotel::Dashboard/V1/HotelReview/Trash', [
             'reviews' => HotelReviewResource::collection($reviews)->response()->getData(true),
