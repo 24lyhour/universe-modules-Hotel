@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Hotel\Http\Resources;
+namespace Modules\Hotel\Http\Resources\Api\Customer\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -19,9 +19,8 @@ class ProvinceResource extends JsonResource
             'region' => $this->region,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
-            'is_active' => $this->is_active,
-            'sort_order' => $this->sort_order,
             'hotels_count' => $this->whenCounted('hotels'),
+            'hotels' => HotelResource::collection($this->whenLoaded('hotels')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('name_kh')->nullable();
             $table->string('code', 10)->unique();
+            $table->string('logo_url')->nullable();
             $table->string('region')->nullable();
             $table->decimal('latitude', 10, 7)->nullable();
             $table->decimal('longitude', 10, 7)->nullable();

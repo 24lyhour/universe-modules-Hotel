@@ -175,12 +175,15 @@ export interface Province {
     name: string;
     name_kh: string | null;
     code: string;
+    logo_url: string | null;
     region: string | null;
     latitude: number | null;
     longitude: number | null;
     is_active: boolean;
     sort_order: number;
     hotels_count: number;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface StatusOption {

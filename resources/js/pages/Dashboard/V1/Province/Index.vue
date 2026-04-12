@@ -51,6 +51,7 @@ const hasActiveFilters = computed(() => {
 });
 
 const columns: TableColumn<Province>[] = [
+    { key: 'logo_url', label: 'Logo' },
     { key: 'name', label: 'Province' },
     { key: 'code', label: 'Code' },
     { key: 'region', label: 'Region' },
@@ -59,6 +60,11 @@ const columns: TableColumn<Province>[] = [
 ];
 
 const actions: TableAction<Province>[] = [
+    {
+        label: 'View',
+        icon: Database,
+        onClick: (province) => router.visit(`/dashboard/hotel-provinces/${province.uuid}`),
+    },
     {
         label: 'Edit',
         icon: Pencil,
@@ -209,16 +215,25 @@ const handleStatusToggle = (province: Province, _newStatus: boolean) => {
                 @page-change="handlePageChange"
                 @per-page-change="handlePerPageChange"
             >
+                <template #cell-logo_url="{ item }">
+                    <div v-if="item.logo_url" class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted overflow-hidden">
+                        <img :src="item.logo_url" :alt="`${item.name} logo`" class="h-full w-full object-cover" />
+                    </div>
+                    <div v-else class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                        <MapPin class="h-4 w-4 text-primary" />
+                    </div>
+                </template>
+
                 <template #cell-name="{ item }">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                            <MapPin class="h-4 w-4 text-primary" />
-                        </div>
+                    <Link
+                        :href="`/dashboard/hotel-provinces/${item.uuid}`"
+                        class="flex items-center gap-3 hover:underline"
+                    >
                         <div>
                             <span class="font-medium">{{ item.name }}</span>
                             <p v-if="item.name_kh" class="text-xs text-muted-foreground">{{ item.name_kh }}</p>
                         </div>
-                    </div>
+                    </Link>
                 </template>
 
                 <template #cell-code="{ item }">

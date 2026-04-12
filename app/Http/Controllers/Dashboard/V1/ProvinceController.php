@@ -49,6 +49,13 @@ class ProvinceController extends Controller
             ->baseRoute('hotel.provinces.index');
     }
 
+    public function show(Province $province): Response
+    {
+        return Inertia::render('hotel::Dashboard/V1/Province/Show', [
+            'province' => $province,
+        ]);
+    }
+
     public function confirmDelete(Province $province, GetProvinceEditDataAction $action): Modal
     {
         return Inertia::modal('hotel::Dashboard/V1/Province/Delete', $action->execute($province))

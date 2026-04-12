@@ -4,6 +4,7 @@ import { useForm } from '@inertiajs/vue3';
 import { useModal } from 'momentum-modal';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { ModalForm } from '@/components/shared';
+import { ImageUpload } from '@/components/shared';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -21,6 +22,7 @@ const form = useForm({
     name: '',
     name_kh: '',
     code: '',
+    logo_url: [],
     region: '',
     latitude: null as number | null,
     longitude: null as number | null,
@@ -96,6 +98,26 @@ const handleSubmit = () => {
                     </div>
                 </div>
             </div>
+
+            <!-- Province Logo -->
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-sm font-medium">Province Logo</h3>
+                    <p class="text-sm text-muted-foreground">Upload a logo for this province (recommended: 200x200px)</p>
+                </div>
+                <Separator />
+
+                <ImageUpload
+                    v-model="form.logo_url"
+                    label=""
+                    :multiple="false"
+                    :max-files="1"
+                    :max-size="5"
+                    :error="form.errors.logo_url"
+                />
+            </div>
         </div>
     </ModalForm>
 </template>
+
+

@@ -3,26 +3,40 @@
 namespace Modules\Hotel\Http\Controllers\Api\V1\Customer;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Modules\Hotel\Http\Resources\Api\Customer\V1\AmenityResource;
+use Modules\Hotel\Models\Amenity;
 
 class AmenityController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Get all amenities grouped by type
      */
-    public function index()
+    public function index(): JsonResponse
     {
-        return view('hotel::index');
+        $amenities = Amenity::active()
+            ->orderBy('group')
+            ->orderBy('sort_order')
+            ->get();
+
+        $grouped = $amenities->groupBy('group');
+
+        return response()->json([
+            'data' => $grouped->map(fn ($group) => [
+                'group' => $group->first()->group,
+                'amenities' => AmenityResource::collection($group),
+            ])->values(),
+        ]);
     }
 
     /**
-     * Show the specified resource.
+     * Get single amenity
      */
-    public function show($id)
+    public function show(Amenity $amenity): JsonResponse
     {
-        return view('hotel::show');
+        return response()->json([
+            'data' => new AmenityResource($amenity),
+        ]);
     }
-
-  
- 
 }
+

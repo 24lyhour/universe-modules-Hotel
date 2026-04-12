@@ -18,6 +18,7 @@ class Province extends Model
         'name',
         'name_kh',
         'code',
+        'logo_url',
         'region',
         'latitude',
         'longitude',
