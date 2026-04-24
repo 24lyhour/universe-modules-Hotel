@@ -4,6 +4,7 @@ namespace Modules\Hotel\Models;
 
 use App\Models\User;
 use App\Traits\HasUuid;
+use App\Traits\IsTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +16,7 @@ use Modules\Hotel\Enums\HotelStatusEnum;
 
 class Hotel extends Model
 {
-    use HasFactory, HasUuid, SoftDeletes;
+    use HasFactory, HasUuid, IsTenant, SoftDeletes;
 
     protected $table = 'hotels';
 

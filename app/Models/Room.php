@@ -83,6 +83,16 @@ class Room extends Model
         return $this->hasMany(RoomPolicies::class);
     }
 
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(\Modules\Booking\Models\Booking::class);
+    }
+
+    public function roomRates(): HasMany
+    {
+        return $this->hasMany(\Modules\Booking\Models\RoomRate::class);
+    }
+
     // Scopes
 
     public function scopeAvailable($query)

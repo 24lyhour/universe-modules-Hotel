@@ -67,11 +67,13 @@ class HotelApiController extends Controller
      */
     public function rooms(Hotel $hotel): JsonResponse
     {
+        $perPage = request()->integer('per_page', 100); // Default 100 rooms per page
+        
         $rooms = $hotel->rooms()
             ->where('status', 'active')
             ->where('is_available', true)
             ->orderBy('sort_order')
-            ->paginate(request()->integer('per_page', 15));
+            ->paginate($perPage);
 
         return RoomResource::collection($rooms)->response();
     }
