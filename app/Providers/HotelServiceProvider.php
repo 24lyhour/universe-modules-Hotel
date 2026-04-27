@@ -2,8 +2,10 @@
 
 namespace Modules\Hotel\Providers;
 
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Hotel\Http\Middleware\DashboardMiddlewareHandle;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -27,32 +29,17 @@ class HotelServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
-        $this->registerMenuItems();
+        $this->registerDashboardMiddleware();
     }
 
     /**
-     * Register menu items for the Hotel module.
+     * Sidebar entries live in DashboardMiddlewareHandle.
      */
-    protected function registerMenuItems(): void
+    protected function registerDashboardMiddleware(): void
     {
-        $this->app->booted(function () {
-            \App\Services\MenuService::addMenuItem(
-                menu: 'primary',
-                id: 'hotel',
-                title: __('Hotel'),
-                url: '/dashboard/hotels',
-                icon: 'Hotel',
-                order: 100,
-                route: 'hotel.*'
-            );
-
-            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Hotels'), '/dashboard/hotels', 10, null, 'hotel.hotels.*', 'Hotel');
-            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Categories'), '/dashboard/hotel-categories', 15, null, 'hotel.categories.*', 'LayoutGrid');
-            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Amenities'), '/dashboard/hotel-amenities', 20, null, 'hotel.amenities.*', 'Sparkles');
-            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Rooms'), '/dashboard/hotel-rooms', 25, null, 'hotel.rooms.*', 'BedDouble');
-            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Reviews'), '/dashboard/hotel-reviews', 30, null, 'hotel.reviews.*', 'Star');
-            \App\Services\MenuService::addSubmenuItem('primary', 'hotel', __('Provinces'), '/dashboard/hotel-provinces', 35, null, 'hotel.provinces.*', 'MapPin');
-        });
+        /** @var \Illuminate\Foundation\Http\Kernel $kernel */
+        $kernel = $this->app->make(HttpKernel::class);
+        $kernel->prependMiddlewareToGroup('web', DashboardMiddlewareHandle::class);
     }
 
     /**
