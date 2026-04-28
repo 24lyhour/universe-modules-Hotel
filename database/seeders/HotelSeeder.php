@@ -175,6 +175,9 @@ class HotelSeeder extends Seeder
                     'website' => 'https://www.' . strtolower(str_replace([' ', '\''], '', $data['name'])) . '.com',
                     'star_rating' => $data['star_rating'],
                     'price_level' => $data['price_level'],
+                    // Legacy single-price column (kept for backward compat
+                    // with old reads). New code reads min_price / max_price.
+                    'price_per_night' => $data['price'],
                     'min_price' => round($data['price'] * 0.7, 2),
                     'max_price' => round($data['price'] * 1.5, 2),
                     'discount_price' => rand(0, 1) ? round($data['price'] * 0.7 * 0.85, 2) : null,

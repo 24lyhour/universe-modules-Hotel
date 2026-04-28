@@ -25,6 +25,7 @@ return new class extends Migration
             $table->unsignedInteger('capacity')->default(2);
             $table->string('bed_type')->nullable();
             $table->unsignedInteger('bed_count')->default(1);
+            $table->unsignedInteger('room_available_count')->default(0);
             $table->unsignedInteger('bathroom_count')->default(1);
             $table->string('room_size')->nullable();
             $table->string('view')->nullable();
