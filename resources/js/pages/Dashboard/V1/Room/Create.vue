@@ -20,6 +20,7 @@ const props = defineProps<{
     hotel: { id: number; uuid: string; name: string } | null;
     hotels?: { id: number; uuid: string; name: string }[];
     statuses: StatusOption[];
+    amenities?: { id: number; name: string; icon: string | null; group: string | null }[];
 }>();
 
 const isStandalone = computed(() => !props.hotel);
@@ -31,7 +32,7 @@ const form = useForm<RoomFormData & { hotel_uuid: string }>({
     hotel_uuid: props.hotel?.uuid ?? '',
     name: '', total_room: 1, room_type: '', room_number: '', description: '', price: null, discount_price: null,
     capacity: 2, bed_type: '', bed_count: 1, room_available_count: 0, bathroom_count: 1, room_size: '', view: '',
-    amenities: [], images: [], is_available: true, sort_order: 0, status: 'active',
+    amenity_ids: [], images: [], is_available: true, sort_order: 0, status: 'active',
 });
 
 const hotelOptions = computed<SearchableSelectOption[]>(() =>
@@ -71,6 +72,6 @@ const handleSubmit = () => {
             </div>
         </div>
 
-        <RoomForm v-model="form" mode="create" :statuses="statuses" />
+        <RoomForm v-model="form" mode="create" :statuses="statuses" :amenities="amenities ?? []" />
     </ModalForm>
 </template>

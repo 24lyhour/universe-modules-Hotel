@@ -15,7 +15,7 @@ class RoomController extends Controller
     public function index(): JsonResponse
     {
         $rooms = Room::active()
-            ->with('hotel')
+            ->with(['hotel', 'amenities'])
             ->where('is_available', true)
             ->paginate(request()->integer('per_page', 15));
 
@@ -27,7 +27,7 @@ class RoomController extends Controller
      */
     public function show(Room $room): JsonResponse
     {
-        $room->load('hotel');
+        $room->load(['hotel', 'amenities']);
 
         return response()->json([
             'data' => new RoomResource($room),

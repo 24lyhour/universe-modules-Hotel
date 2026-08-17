@@ -16,6 +16,7 @@ const props = defineProps<{
     hotel: { id: number; uuid: string; name: string };
     room: Room;
     statuses: StatusOption[];
+    amenities?: { id: number; name: string; icon: string | null; group: string | null }[];
 }>();
 
 const { show, close, redirect } = useModal();
@@ -27,7 +28,7 @@ const form = useForm<RoomFormData>({
     price: props.room.price, discount_price: props.room.discount_price,
     capacity: props.room.capacity, bed_type: props.room.bed_type ?? '', bed_count: props.room.bed_count,
     bathroom_count: props.room.bathroom_count, room_size: props.room.room_size ?? '', view: props.room.view ?? '',
-    amenities: props.room.amenities ?? [], images: props.room.images ?? [],
+    amenity_ids: props.room.amenity_ids ?? [], images: props.room.images ?? [],
     is_available: props.room.is_available, sort_order: props.room.sort_order, status: props.room.status,
 });
 
@@ -40,6 +41,6 @@ const handleSubmit = () => {
 
 <template>
     <ModalForm v-model:open="isOpen" :title="`Edit ${room.name}`" description="Update room details" mode="edit" size="xl" submit-text="Save Changes" :loading="form.processing" :disabled="isFormInvalid" @submit="handleSubmit">
-        <RoomForm v-model="form" mode="edit" :statuses="statuses" />
+        <RoomForm v-model="form" mode="edit" :statuses="statuses" :amenities="amenities ?? []" />
     </ModalForm>
 </template>

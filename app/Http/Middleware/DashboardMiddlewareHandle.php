@@ -40,6 +40,8 @@ class DashboardMiddlewareHandle
         MenuService::addSubmenuItem('primary', 'hotel', __('Amenities'), '/dashboard/hotel-amenities', 20, null, 'hotel.amenities.*', 'Sparkles');
         MenuService::addSubmenuItem('primary', 'hotel', __('Rooms'), '/dashboard/hotel-rooms', 25, null, 'hotel.rooms.*', 'BedDouble');
         MenuService::addSubmenuItem('primary', 'hotel', __('Reviews'), '/dashboard/hotel-reviews', 30, null, 'hotel.reviews.*', 'Star');
+        MenuService::addSubmenuItem('primary', 'hotel', __('Room Reviews'), '/dashboard/hotel-room-reviews', 32, null, 'hotel.room-reviews.*', 'MessageSquare');
+        MenuService::addSubmenuItem('primary', 'hotel', __('Room Policies'), '/dashboard/hotel-room-policies', 34, null, 'hotel.room-policies.*', 'ClipboardList');
         MenuService::addSubmenuItem('primary', 'hotel', __('Provinces'), '/dashboard/hotel-provinces', 35, null, 'hotel.provinces.*', 'MapPin');
 
         static::$registered = true;

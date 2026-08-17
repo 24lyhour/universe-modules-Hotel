@@ -12,7 +12,7 @@ class RoomService
 {
     public function paginate(Hotel $hotel, int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        $query = $hotel->rooms()->getQuery();
+        $query = $hotel->rooms()->getQuery()->with('amenities');
 
         $this->applyFilters($query, $filters);
 
@@ -27,16 +27,44 @@ class RoomService
     public function create(Hotel $hotel, array $data): Room
     {
         return DB::transaction(function () use ($hotel, $data) {
+            $amenityIds = $this->pullAmenityIds($data);
+
             $data['uuid'] = (string) Str::uuid();
             $data['hotel_id'] = $hotel->id;
 
-            return Room::create($data);
+            $room = Room::create($data);
+            $room->amenities()->sync($amenityIds);
+
+            return $room;
         });
     }
 
     public function update(Room $room, array $data): bool
     {
-        return $room->update($data);
+        return DB::transaction(function () use ($room, $data) {
+            $syncAmenities = array_key_exists('amenity_ids', $data);
+            $amenityIds = $this->pullAmenityIds($data);
+
+            $updated = $room->update($data);
+
+            if ($syncAmenities) {
+                $room->amenities()->sync($amenityIds);
+            }
+
+            return $updated;
+        });
+    }
+
+    /**
+     * Extract and normalise amenity ids out of the payload so they are not
+     * passed to Room::create/update (the relation is synced separately).
+     */
+    protected function pullAmenityIds(array &$data): array
+    {
+        $ids = $data['amenity_ids'] ?? [];
+        unset($data['amenity_ids']);
+
+        return array_values(array_filter(array_map('intval', (array) $ids)));
     }
 
     public function delete(Room $room): bool

@@ -5,32 +5,31 @@ namespace Modules\Hotel\Http\Controllers\Api\V1\Customer;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Hotel\Http\Resources\Api\Customer\V1\HotelReviewResource;
-use Modules\Hotel\Models\Hotel;
-use Modules\Hotel\Models\HotelReview;
+use Modules\Hotel\Http\Resources\Api\Customer\V1\RoomReviewResource;
+use Modules\Hotel\Models\Room;
 
-class HotelReviewController extends Controller
+class RoomReviewController extends Controller
 {
     /**
-     * Get reviews for a specific hotel
+     * Get reviews for a specific room.
      */
-    public function index(Hotel $hotel): JsonResponse
+    public function index(Room $room): JsonResponse
     {
-        $reviews = $hotel->reviews()
+        $reviews = $room->reviews()
             ->with('customer')
             ->active()
             ->orderByDesc('created_at')
             ->paginate(request()->integer('per_page', 10));
 
-        return HotelReviewResource::collection($reviews)->response();
+        return RoomReviewResource::collection($reviews)->response();
     }
 
     /**
-     * Get review statistics for a hotel
+     * Get review statistics for a room.
      */
-    public function stats(Hotel $hotel): JsonResponse
+    public function stats(Room $room): JsonResponse
     {
-        $reviews = $hotel->reviews()->active()->get();
+        $reviews = $room->reviews()->active()->get();
 
         $stats = [
             'total_reviews' => $reviews->count(),
@@ -50,16 +49,16 @@ class HotelReviewController extends Controller
     }
 
     /**
-     * Store a new review (requires auth)
+     * Store a new room review (requires auth).
      */
-    public function store(Request $request, Hotel $hotel): JsonResponse
+    public function store(Request $request, Room $room): JsonResponse
     {
         $validated = $request->validate([
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'required|string|min:10|max:500',
         ]);
 
-        $review = $hotel->reviews()->create([
+        $review = $room->reviews()->create([
             'customer_id' => $request->user()->id,
             'guest_name' => $request->user()->name ?? null,
             'rating' => $validated['rating'],
@@ -69,17 +68,7 @@ class HotelReviewController extends Controller
 
         return response()->json([
             'message' => 'Review submitted successfully',
-            'data' => new HotelReviewResource($review->load('customer')),
+            'data' => new RoomReviewResource($review->load('customer')),
         ], 201);
-    }
-
-    /**
-     * Get single review
-     */
-    public function show(HotelReview $review): JsonResponse
-    {
-        return response()->json([
-            'data' => new HotelReviewResource($review),
-        ]);
     }
 }

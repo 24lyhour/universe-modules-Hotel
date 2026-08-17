@@ -5,14 +5,14 @@ namespace Modules\Hotel\Http\Resources\Api\Customer\V1;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class HotelReviewResource extends JsonResource
+class RoomReviewResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
-            'hotel_id' => $this->hotel_id,
+            'room_id' => $this->room_id,
             'reviewer_name' => $this->customer?->name ?? $this->guest_name ?? 'Guest',
             'rating' => (float) $this->rating,
             'comment' => $this->comment,

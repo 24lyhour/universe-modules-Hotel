@@ -6,6 +6,7 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -33,7 +34,6 @@ class Room extends Model
         'bathroom_count',
         'room_size',
         'view',
-        'amenities',
         'images',
         'is_available',
         'sort_order',
@@ -43,7 +43,6 @@ class Room extends Model
     protected function casts(): array
     {
         return [
-            'amenities' => 'array',
             'images' => 'array',
             'price' => 'decimal:2',
             'discount_price' => 'decimal:2',
@@ -83,6 +82,15 @@ class Room extends Model
         return $this->hasMany(RoomPolicies::class);
     }
 
+    /**
+     * Amenities assigned to this room (from the hotel amenity catalog).
+     */
+    public function amenities(): BelongsToMany
+    {
+        return $this->belongsToMany(Amenity::class, 'hotel_amenity_room', 'room_id', 'amenity_id')
+            ->withTimestamps();
+    }
+
     public function bookings(): HasMany
     {
         return $this->hasMany(\Modules\Booking\Models\Booking::class);
@@ -103,6 +111,14 @@ class Room extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
+    }
+
+    /**
+     * Reviews left for this room.
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(RoomReview::class);
     }
 
 }

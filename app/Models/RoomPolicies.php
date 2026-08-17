@@ -2,53 +2,45 @@
 
 namespace Modules\Hotel\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Hotel\Database\Factories\RoomPoliciesFactory;
 
 class RoomPolicies extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     */
+    protected $table = 'hotel_room_policies';
+
     protected $fillable = [
         'uuid',
         'title',
         'icon',
         'description',
-        'is_active'
+        'is_active',
+        'sort_order',
     ];
 
-    /**
-     * protection  
-     */
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+            'sort_order' => 'integer',
+        ];
+    }
 
-    /**
-     * protecton for facotory
-     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     protected static function newFactory(): RoomPoliciesFactory
     {
         return RoomPoliciesFactory::new();
     }
 
-    /**
-     * hasMany room
-     */
-    public function rooms(): HasMany
-    {
-        return $this->hasMany(Room::class, 'room_id');
-    }
-
-    /**
-     * scope status
-     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

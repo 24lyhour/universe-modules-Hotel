@@ -59,6 +59,12 @@ class Amenity extends Model
             ->withTimestamps();
     }
 
+    public function rooms(): BelongsToMany
+    {
+        return $this->belongsToMany(Room::class, 'hotel_amenity_room', 'amenity_id', 'room_id')
+            ->withTimestamps();
+    }
+
     // Scopes
 
     public function scopeActive($query)

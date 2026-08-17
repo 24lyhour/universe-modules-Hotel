@@ -12,6 +12,7 @@ use Modules\Hotel\Enums\RoomStatusEnum;
 use Modules\Hotel\Http\Requests\StoreRoomRequest;
 use Modules\Hotel\Http\Requests\UpdateRoomRequest;
 use Modules\Hotel\Http\Resources\RoomResource;
+use Modules\Hotel\Models\Amenity;
 use Modules\Hotel\Models\Hotel;
 use Modules\Hotel\Models\Room;
 use Modules\Hotel\Services\RoomService;
@@ -22,11 +23,23 @@ class RoomController extends Controller
         protected RoomService $roomService
     ) {}
 
+    /**
+     * Active amenity catalog used to populate the room create/edit forms.
+     */
+    private function amenityOptions()
+    {
+        return Amenity::active()
+            ->orderBy('group')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name', 'icon', 'group']);
+    }
+
     public function allRooms(Request $request): Response
     {
         $perPage = $request->input('per_page', 10);
         $filters = $request->only(['search', 'status', 'hotel', 'is_available']);
-        $query = Room::query()->with('hotel');
+        $query = Room::query()->with(['hotel', 'amenities']);
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
@@ -87,6 +100,7 @@ class RoomController extends Controller
         return Inertia::modal('hotel::Dashboard/V1/Room/Create', [
             'hotel' => $hotel->only(['id', 'uuid', 'name']),
             'statuses' => RoomStatusEnum::options(),
+            'amenities' => $this->amenityOptions(),
         ])->baseRoute('hotel.hotels.rooms.index', ['hotel' => $hotel]);
     }
 
@@ -101,7 +115,7 @@ class RoomController extends Controller
 
     public function show(Hotel $hotel, Room $room): Response
     {
-        $room->load('hotel');
+        $room->load(['hotel', 'amenities']);
 
         return Inertia::render('hotel::Dashboard/V1/Room/Show', [
             'hotel' => $hotel->only(['id', 'uuid', 'name']),
@@ -111,10 +125,13 @@ class RoomController extends Controller
 
     public function edit(Hotel $hotel, Room $room): Modal
     {
+        $room->load('amenities');
+
         return Inertia::modal('hotel::Dashboard/V1/Room/Edit', [
             'hotel' => $hotel->only(['id', 'uuid', 'name']),
             'room' => (new RoomResource($room))->resolve(),
             'statuses' => RoomStatusEnum::options(),
+            'amenities' => $this->amenityOptions(),
         ])->baseRoute('hotel.hotels.rooms.index', ['hotel' => $hotel]);
     }
 
@@ -189,6 +206,7 @@ class RoomController extends Controller
             'hotel' => null,
             'hotels' => $hotels,
             'statuses' => RoomStatusEnum::options(),
+            'amenities' => $this->amenityOptions(),
         ])->baseRoute('hotel.rooms.index');
     }
 

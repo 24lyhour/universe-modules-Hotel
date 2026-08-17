@@ -6,6 +6,7 @@ use Modules\Hotel\Http\Controllers\Api\V1\Customer\HotelBookingController;
 use Modules\Hotel\Http\Controllers\Api\V1\Customer\ProvinceController;
 use Modules\Hotel\Http\Controllers\Api\V1\Customer\AmenityController;
 use Modules\Hotel\Http\Controllers\Api\V1\Customer\HotelReviewController;
+use Modules\Hotel\Http\Controllers\Api\V1\Customer\RoomReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,12 @@ Route::prefix('v1/hotels')->name('hotel.')->group(function () {
     // Hotel listings & details
     Route::get('/', [HotelApiController::class, 'index'])->name('index');
     Route::get('featured', [HotelApiController::class, 'featured'])->name('featured');
+
+    // Room reviews (defined before the {hotel} catch-all to avoid collisions)
+    Route::get('rooms/{room}/reviews', [RoomReviewController::class, 'index'])->name('rooms.reviews.index');
+    Route::get('rooms/{room}/reviews/stats', [RoomReviewController::class, 'stats'])->name('rooms.reviews.stats');
+    Route::post('rooms/{room}/reviews', [RoomReviewController::class, 'store'])->middleware('auth:sanctum')->name('rooms.reviews.store');
+
     Route::get('{hotel}', [HotelApiController::class, 'show'])->name('show');
     Route::get('{hotel}/rooms', [HotelApiController::class, 'rooms'])->name('rooms');
 

@@ -52,8 +52,8 @@ class HotelApiController extends Controller
         $hotel->load([
             'category',
             'province',
-            'rooms' => fn ($q) => $q->where('status', 'active')->orderBy('sort_order'),
-            'reviews' => fn ($q) => $q->where('status', 'approved')->latest(),
+            'rooms' => fn ($q) => $q->where('status', 'active')->orderBy('sort_order')->with('amenities'),
+            'reviews' => fn ($q) => $q->where('is_active', true)->latest(),
             'user',
         ]);
 
@@ -70,6 +70,9 @@ class HotelApiController extends Controller
         $perPage = request()->integer('per_page', 100); // Default 100 rooms per page
         
         $rooms = $hotel->rooms()
+            ->with('amenities')
+            ->withCount(['reviews' => fn ($q) => $q->where('is_active', true)])
+            ->withAvg(['reviews' => fn ($q) => $q->where('is_active', true)], 'rating')
             ->where('status', 'active')
             ->where('is_available', true)
             ->orderBy('sort_order')

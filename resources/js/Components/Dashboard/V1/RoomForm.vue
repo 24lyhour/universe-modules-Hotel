@@ -6,18 +6,28 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ImageUpload } from '@/components/shared';
 import type { RoomFormData, StatusOption } from '../../../types';
 import TiptapEditor from '@/components/TiptapEditor.vue';
 
+interface AmenityOption {
+    id: number;
+    name: string;
+    icon: string | null;
+    group: string | null;
+}
+
 interface Props {
     mode?: 'create' | 'edit';
     statuses?: StatusOption[];
+    amenities?: AmenityOption[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
     mode: 'create',
     statuses: () => [],
+    amenities: () => [],
 });
 
 const model = defineModel<InertiaForm<RoomFormData>>({ required: true });
@@ -28,6 +38,23 @@ const isAvailable = computed({
         model.value.is_available = value;
     },
 });
+
+// Group amenities by their `group` for a tidy, sectioned picker.
+const groupedAmenities = computed<Record<string, AmenityOption[]>>(() =>
+    props.amenities.reduce((acc, amenity) => {
+        const key = amenity.group ?? 'Other';
+        (acc[key] ??= []).push(amenity);
+        return acc;
+    }, {} as Record<string, AmenityOption[]>),
+);
+
+const isAmenitySelected = (id: number) => model.value.amenity_ids.includes(id);
+
+const toggleAmenity = (id: number) => {
+    const selected = new Set(model.value.amenity_ids);
+    selected.has(id) ? selected.delete(id) : selected.add(id);
+    model.value.amenity_ids = Array.from(selected);
+};
 </script>
 
 <template>
@@ -188,6 +215,35 @@ const isAvailable = computed({
                     <Input id="view" v-model="model.view" placeholder="e.g. Sea View" />
                 </div>
             </div>
+        </div>
+
+        <!-- Amenities -->
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Amenities</h3>
+                <p class="text-sm text-muted-foreground">Select the amenities available in this room</p>
+            </div>
+            <Separator />
+            <div v-if="amenities.length" class="space-y-4">
+                <div v-for="(group, groupName) in groupedAmenities" :key="groupName" class="space-y-2">
+                    <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{ groupName }}</p>
+                    <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        <label
+                            v-for="amenity in group"
+                            :key="amenity.id"
+                            class="flex cursor-pointer items-center gap-2 rounded-md border p-2 transition-colors hover:bg-muted/50"
+                            :class="isAmenitySelected(amenity.id) ? 'border-primary bg-primary/5' : ''"
+                        >
+                            <Checkbox :model-value="isAmenitySelected(amenity.id)" @update:model-value="() => toggleAmenity(amenity.id)" />
+                            <span class="text-sm">{{ amenity.name }}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <p v-else class="text-sm text-muted-foreground">
+                No amenities available yet. Create amenities first to assign them here.
+            </p>
+            <p v-if="model.errors.amenity_ids" class="text-sm text-destructive">{{ model.errors.amenity_ids }}</p>
         </div>
 
         <!-- Availability -->

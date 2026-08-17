@@ -7,6 +7,8 @@ use Modules\Hotel\Http\Controllers\Dashboard\V1\HotelController;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\HotelReviewController;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\ProvinceController;
 use Modules\Hotel\Http\Controllers\Dashboard\V1\RoomController;
+use Modules\Hotel\Http\Controllers\Dashboard\V1\RoomPolicyController;
+use Modules\Hotel\Http\Controllers\Dashboard\V1\RoomReviewController;
 
 Route::middleware(['auth', 'verified', 'auto.permission'])
     ->prefix('dashboard')
@@ -62,6 +64,34 @@ Route::middleware(['auth', 'verified', 'auto.permission'])
         Route::delete('hotel-reviews/{review}', [HotelReviewController::class, 'destroy'])->name('hotel.reviews.destroy');
         Route::put('hotel-reviews/{uuid}/restore', [HotelReviewController::class, 'restore'])->name('hotel.reviews.restore');
         Route::delete('hotel-reviews/{uuid}/force-delete', [HotelReviewController::class, 'forceDelete'])->name('hotel.reviews.force-delete');
+
+        // ---------------------------------------------------------------
+        // Room Reviews
+        // ---------------------------------------------------------------
+        Route::get('hotel-room-reviews', [RoomReviewController::class, 'index'])->name('hotel.room-reviews.index');
+        Route::get('hotel-room-reviews/trash', [RoomReviewController::class, 'trash'])->name('hotel.room-reviews.trash');
+        Route::get('hotel-room-reviews/{review}', [RoomReviewController::class, 'show'])->name('hotel.room-reviews.show');
+        Route::get('hotel-room-reviews/{review}/delete', [RoomReviewController::class, 'confirmDelete'])->name('hotel.room-reviews.confirm-delete');
+        Route::patch('hotel-room-reviews/{review}/status', [RoomReviewController::class, 'toggleActive'])->name('hotel.room-reviews.update-status');
+        Route::patch('hotel-room-reviews/{review}/reply', [RoomReviewController::class, 'reply'])->name('hotel.room-reviews.reply');
+        Route::delete('hotel-room-reviews/{review}', [RoomReviewController::class, 'destroy'])->name('hotel.room-reviews.destroy');
+        Route::put('hotel-room-reviews/{uuid}/restore', [RoomReviewController::class, 'restore'])->name('hotel.room-reviews.restore');
+        Route::delete('hotel-room-reviews/{uuid}/force-delete', [RoomReviewController::class, 'forceDelete'])->name('hotel.room-reviews.force-delete');
+
+        // ---------------------------------------------------------------
+        // Room Policies
+        // ---------------------------------------------------------------
+        Route::get('hotel-room-policies/trash', [RoomPolicyController::class, 'trash'])->name('hotel.room-policies.trash');
+        Route::put('hotel-room-policies/{uuid}/restore', [RoomPolicyController::class, 'restore'])->name('hotel.room-policies.restore');
+        Route::delete('hotel-room-policies/{uuid}/force-delete', [RoomPolicyController::class, 'forceDelete'])->name('hotel.room-policies.force-delete');
+        Route::delete('hotel-room-policies/bulk-delete', [RoomPolicyController::class, 'bulkDelete'])->name('hotel.room-policies.bulk-delete');
+        Route::patch('hotel-room-policies/{policy}/toggle-active', [RoomPolicyController::class, 'toggleActive'])->name('hotel.room-policies.toggle-active');
+        Route::get('hotel-room-policies/{policy}/delete', [RoomPolicyController::class, 'confirmDelete'])->name('hotel.room-policies.confirm-delete');
+
+        Route::resource('hotel-room-policies', RoomPolicyController::class)
+            ->parameters(['hotel-room-policies' => 'policy'])
+            ->names('hotel.room-policies')
+            ->except(['show']);
 
         // ---------------------------------------------------------------
         // Hotels

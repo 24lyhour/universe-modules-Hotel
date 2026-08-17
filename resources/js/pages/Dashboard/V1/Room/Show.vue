@@ -207,8 +207,8 @@ const getStatusVariant = (status: string) => {
                     <CardHeader><CardTitle>Amenities</CardTitle></CardHeader>
                     <CardContent>
                         <div class="flex flex-wrap gap-2">
-                            <Badge v-for="amenity in room.amenities" :key="amenity" variant="outline">
-                                {{ amenity }}
+                            <Badge v-for="amenity in room.amenities" :key="amenity.id" variant="outline">
+                                {{ amenity.name }}
                             </Badge>
                         </div>
                     </CardContent>

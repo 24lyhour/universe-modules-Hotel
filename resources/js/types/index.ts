@@ -86,7 +86,8 @@ export interface Room {
     bathroom_count: number;
     room_size: string | null;
     view: string | null;
-    amenities: string[];
+    amenities: Amenity[];
+    amenity_ids: number[];
     images: string[];
     is_available: boolean;
     sort_order: number;
@@ -112,7 +113,7 @@ export interface RoomFormData {
     bathroom_count: number;
     room_size: string;
     view: string;
-    amenities: string[];
+    amenity_ids: number[];
     images: string[];
     is_available: boolean;
     sort_order: number;
@@ -164,6 +165,27 @@ export interface AmenityFormData {
     name: string;
     icon: string;
     group: string;
+    description: string;
+    is_active: boolean;
+    sort_order: number;
+}
+
+export interface RoomPolicy {
+    id: number;
+    uuid: string;
+    title: string;
+    icon: string | null;
+    description: string | null;
+    is_active: boolean;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+}
+
+export interface RoomPolicyFormData {
+    title: string;
+    icon: string;
     description: string;
     is_active: boolean;
     sort_order: number;
@@ -247,4 +269,38 @@ export interface HotelStats {
     featured: number;
     trashed: number;
 
+}
+
+export interface RoomReview {
+    id: number;
+    uuid: string;
+    room: { id: number; uuid: string; name: string; hotel: { id: number; uuid: string; name: string } | null } | null;
+    customer: { id: number; name: string; avatar: string | null } | null;
+    guest_name: string | null;
+    guest_email: string | null;
+    rating: number;
+    comment: string | null;
+    reply: string | null;
+    replied_at: string | null;
+    images: string[];
+    is_recommend: boolean;
+    is_verified: boolean;
+    is_active: boolean;
+    helpful_count: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+}
+
+export interface RoomReviewStats {
+    total: number;
+    active: number;
+    inactive: number;
+    pending_reply: number;
+    average_rating: number;
+    '5_star': number;
+    '4_star': number;
+    '3_star': number;
+    '2_star': number;
+    '1_star': number;
 }
